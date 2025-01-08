@@ -1,0 +1,133 @@
+use crate::{
+    arith::{self},
+    modulo::PolynomialModulo,
+};
+use num::{One, Zero};
+use std::ops::{Add, Mul, Neg, Sub};
+
+/// Polynomial implemented by a vector of coefficients of type `T` with
+/// operations defined in Zp\[X\]/(x^n + 1). **The constant N must be a power of two.**
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Polynomial<T, const N: usize> {
+    pub(crate) coeffs: Vec<T>,
+}
+
+impl<T, const N: usize> Polynomial<T, N> {
+    /// Creates a new polynomial with the given coefficients.
+    /// p(x) = coeffs\[0\] + coeffs\[1\] * x + coeffs\[2\] * x^2 + ...
+    ///
+    /// ## Safety
+    /// The constant N must be a power of two, so that the polynomial is irreducible over Z.
+    pub fn new(coeffs: Vec<T>) -> Self {
+        assert_eq!(N.count_ones(), 1, "N must be a power of two");
+        Polynomial { coeffs }
+    }
+
+    /// Returns the degree of the polynomial.
+    ///
+    /// ## Panics
+    /// Panics if the input is an empty vector.
+    pub fn deg(&self) -> usize {
+        self.coeffs.len() - 1
+    }
+
+    /// Returns the leading coefficient of the polynomial.
+    pub fn leading_coefficient(&self) -> T
+    where
+        T: Zero + Clone,
+    {
+        self.coeffs.last().cloned().unwrap_or_else(T::zero)
+    }
+
+    /// Returns the coefficient of the term with the given degree.
+    pub fn coefficient(&self, idx: usize) -> T
+    where
+        T: Zero + Clone,
+    {
+        self.coeffs.get(idx).cloned().unwrap_or_else(T::zero)
+    }
+
+    /// Maps the polynomial coefficients to another type.
+    pub fn mapv<U, F>(&self, f: F) -> Polynomial<U, N>
+    where
+        F: Fn(&T) -> U,
+    {
+        Polynomial {
+            coeffs: self.coeffs.iter().map(f).collect(),
+        }
+    }
+}
+
+impl<T, const N: usize> Zero for Polynomial<T, N>
+where
+    T: Zero + One + Clone,
+    for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+{
+    fn zero() -> Self {
+        Polynomial { coeffs: vec![] }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.coeffs.is_empty() || self.coeffs.iter().all(|c| c.is_zero())
+    }
+}
+
+// ... impl ops::* for Polynomial<T> ...
+
+impl<T, const N: usize> Add for Polynomial<T, N>
+where
+    T: Zero + One + Clone,
+    for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+{
+    type Output = Self;
+
+    #[allow(clippy::needless_borrow)]
+    fn add(self, other: Self) -> Self {
+        let ret = arith::add(&self, &other);
+        let modulo = PolynomialModulo::<T, N>::new();
+        arith::modulo(&ret, &modulo)
+    }
+}
+
+impl<T, const N: usize> Neg for Polynomial<T, N>
+where
+    T: Zero + Clone,
+    for<'a> &'a T: Neg<Output = T>,
+{
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        let mut result = self;
+        result.coeffs.iter_mut().for_each(|c| *c = -&*c);
+        result
+    }
+}
+
+impl<T, const N: usize> Sub for Polynomial<T, N>
+where
+    T: Zero + One + Clone,
+    for<'a> &'a T: Neg<Output = T> + Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+{
+    type Output = Self;
+
+    #[allow(clippy::needless_borrow)]
+    fn sub(self, other: Self) -> Self {
+        let ret = arith::add(&self, &(-other));
+        let modulo = PolynomialModulo::<T, N>::new();
+        arith::modulo(&ret, &modulo)
+    }
+}
+
+impl<T, const N: usize> Mul for Polynomial<T, N>
+where
+    T: Zero + Clone,
+    for<'a> &'a T: Mul<Output = T> + Add<Output = T> + Sub<Output = T>,
+{
+    type Output = Self;
+
+    #[allow(clippy::needless_borrow)]
+    fn mul(self, other: Self) -> Self {
+        // Different with arith::mul, this applies modulo operation.
+        arith::negacyclic_convolution(&self, &other)
+    }
+}
