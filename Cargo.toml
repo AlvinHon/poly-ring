@@ -15,4 +15,6 @@ path = "src/lib.rs"
 
 [dependencies]
 num = "0.4"
+
+[dev-dependencies]
 rand = "0.8.5"

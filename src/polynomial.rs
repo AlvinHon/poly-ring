@@ -1,5 +1,5 @@
 use crate::{
-    arith::{self},
+    arith::{self, trim_zeros},
     modulo::PolynomialModulo,
 };
 use num::{One, Zero};
@@ -18,8 +18,19 @@ impl<T, const N: usize> Polynomial<T, N> {
     ///
     /// ## Safety
     /// The constant N must be a power of two, so that the polynomial is irreducible over Z.
-    pub fn new(coeffs: Vec<T>) -> Self {
+    pub fn new(coeffs: Vec<T>) -> Self
+    where
+        T: Zero,
+    {
         assert_eq!(N.count_ones(), 1, "N must be a power of two");
+        assert!(
+            coeffs.len() <= N,
+            "The degree of the polynomial must be less than N"
+        );
+
+        let mut coeffs = coeffs;
+        trim_zeros(&mut coeffs);
+
         Polynomial { coeffs }
     }
 
@@ -54,6 +65,18 @@ impl<T, const N: usize> Polynomial<T, N> {
     {
         Polynomial {
             coeffs: self.coeffs.iter().map(f).collect(),
+        }
+    }
+}
+
+impl<T, const N: usize> One for Polynomial<T, N>
+where
+    T: Zero + One + Clone,
+    for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+{
+    fn one() -> Self {
+        Polynomial {
+            coeffs: vec![T::one()],
         }
     }
 }
@@ -120,14 +143,56 @@ where
 
 impl<T, const N: usize> Mul for Polynomial<T, N>
 where
-    T: Zero + Clone,
+    T: Zero + One + Clone,
     for<'a> &'a T: Mul<Output = T> + Add<Output = T> + Sub<Output = T>,
 {
     type Output = Self;
 
     #[allow(clippy::needless_borrow)]
     fn mul(self, other: Self) -> Self {
+        if self.is_zero() || other.is_zero() {
+            return Polynomial::zero();
+        }
         // Different with arith::mul, this applies modulo operation.
         arith::negacyclic_convolution(&self, &other)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const N: usize = 512; // power of two
+
+    #[test]
+    #[should_panic]
+    fn test_new() {
+        const INVALID_N: usize = 511;
+        Polynomial::<i32, INVALID_N>::new(vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn test_zero() {
+        let p = Polynomial::<i32, N>::zero();
+        assert!(p.is_zero());
+    }
+
+    #[test]
+    fn test_deg() {
+        let p = Polynomial::<i32, N>::new(vec![1, 2, 3]);
+        assert_eq!(p.deg(), 2);
+    }
+
+    #[test]
+    fn test_leading_coefficient() {
+        let p = Polynomial::<i32, N>::new(vec![1, 2, 3]);
+        assert_eq!(p.leading_coefficient(), 3);
+    }
+
+    #[test]
+    fn test_mapv() {
+        let p = Polynomial::<i32, N>::new(vec![1, 2, 3]);
+        let q = p.mapv(|c| *c as i64);
+        assert_eq!(q.coeffs, vec![1i64, 2, 3]);
     }
 }

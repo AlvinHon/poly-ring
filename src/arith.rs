@@ -51,7 +51,7 @@ where
 {
     let (a, b) = if a.deg() < b.deg() { (a, b) } else { (b, a) };
 
-    let mut c = Polynomial::new(vec![T::zero(); N]);
+    let mut coeffs = vec![T::zero(); N];
     for i in 0..N {
         let a_coeff = a.coefficient(i);
         if a_coeff.is_zero() {
@@ -63,18 +63,19 @@ where
                 continue;
             }
 
-            let c_i_j = &c.coeffs[(i + j) % N];
+            let c_i_j = &coeffs[(i + j) % N];
             let pow = (i + j) / N;
 
             if pow % 2 == 0 {
-                c.coeffs[(i + j) % N] = c_i_j + &(&a_coeff * &b_coeff);
+                coeffs[(i + j) % N] = c_i_j + &(&a_coeff * &b_coeff);
             } else {
-                c.coeffs[(i + j) % N] = c_i_j - &(&a_coeff * &b_coeff);
+                coeffs[(i + j) % N] = c_i_j - &(&a_coeff * &b_coeff);
             }
         }
     }
-    trim_zeros(&mut c.coeffs);
-    c
+    trim_zeros(&mut coeffs);
+
+    Polynomial { coeffs }
 }
 
 /// Computes the pseudo remainder `r` of this polynomial `p` by another polynomial modulo.
@@ -121,12 +122,86 @@ where
 }
 
 /// Trims the leading zero coefficients of the polynomial.
-fn trim_zeros<T: Zero>(v: &mut Vec<T>) {
+pub(crate) fn trim_zeros<T: Zero>(v: &mut Vec<T>) {
     while let Some(&t) = v.last().as_ref() {
         if t.is_zero() {
             v.pop();
         } else {
             break;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::ops::Neg;
+
+    use rand::Rng;
+
+    use super::*;
+
+    const N: usize = 512; // power of two
+
+    #[test]
+    fn test_add() {
+        let p1 = Polynomial::<i32, N>::new(vec![1, 2, 3]);
+        let p2 = Polynomial::new(vec![4, 5]);
+        let r = add(&p1, &p2);
+        assert_eq!(r.coeffs, vec![5, 7, 3]);
+
+        let p1 = Polynomial::<i32, N>::new(vec![2, 1]);
+        let p2 = Polynomial::new(vec![5, 4, 3]);
+        let r = add(&p1, &p2);
+        assert_eq!(r.coeffs, vec![7, 5, 3]);
+
+        let p1 = Polynomial::<i32, N>::new(vec![1, 2, 3]);
+        let p2 = Polynomial::zero();
+        let r = add(&p1, &p2);
+        assert_eq!(r.coeffs, vec![1, 2, 3]);
+
+        let p1 = Polynomial::<i32, N>::zero();
+        let p2 = Polynomial::new(vec![1, 2, 3]);
+        let r = add(&p1, &p2);
+        assert_eq!(r.coeffs, vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn test_neg() {
+        let p1 = Polynomial::<i32, N>::new(vec![1, 2, 3]);
+        let p2 = Polynomial::new(vec![4, 5]);
+        let r = add(&p1, &p2.neg());
+        assert_eq!(r.coeffs, vec![-3, -3, 3]);
+
+        let p1 = Polynomial::<i32, N>::new(vec![2, 1]);
+        let p2 = Polynomial::new(vec![5, 4, 3]);
+        let r = add(&p1, &p2.neg());
+        assert_eq!(r.coeffs, vec![-3, -3, -3]);
+
+        let p1 = Polynomial::<i32, N>::new(vec![1, 2, 3]);
+        let p2 = Polynomial::zero();
+        let r = add(&p1, &p2.neg());
+        assert_eq!(r.coeffs, vec![1, 2, 3]);
+
+        let p1 = Polynomial::<i32, N>::zero();
+        let p2 = Polynomial::new(vec![1, 2, 3]);
+        let r = add(&p1, &p2.neg());
+        assert_eq!(r.coeffs, vec![-1, -2, -3]);
+    }
+
+    #[test]
+    fn test_cyclic() {
+        let rng = &mut rand::thread_rng();
+        let a =
+            Polynomial::<i32, N>::new((0..N).map(|_| rng.gen_range(0..100)).collect::<Vec<_>>());
+
+        let p = Polynomial::<i32, N>::new(vec![0, 1]);
+        let rhs = negacyclic_convolution(&a, &p);
+
+        // (x^n + 1)-cyclic lattice is an ideal in Z[x]/(x^n + 1)
+        // (v_{0} + ... v_{n-2} x^{n-2} + v_{n-1} x^{n-1}) x = -v_{n-1} + v_{0} x + ... + v_{n-2} x^{n-1}
+        assert!(a.coeffs[N - 1] == -&rhs.coeffs[0]);
+        for i in 0..N - 1 {
+            assert!(a.coeffs[i] == rhs.coeffs[i + 1]);
         }
     }
 }

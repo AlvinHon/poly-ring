@@ -2,8 +2,7 @@ use std::marker::PhantomData;
 
 use num::{One, Zero};
 
-/// Polynomial Modulo implemented by a vector of terms (degree, coefficient) in sparse vector representation.
-/// It is typically used as the polynomial `x^n + 1` in this library.
+/// Represents a Polynomial Modulo `x^n + 1` used in polynomial division algorithm in this library.
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub(crate) struct PolynomialModulo<T, const N: usize> {
     phantom: PhantomData<T>,
