@@ -23,25 +23,8 @@ where
     Polynomial { coeffs: result }
 }
 
-// /// Natively multiply polynomials `a * b` without modulo.
-// pub fn mul<T, const N: usize>(a: &Polynomial<T, N>, b: &Polynomial<T, N>) -> Polynomial<T, N>
-// where
-//     T: Zero + Clone,
-//     for<'a> &'a T: Mul<Output = T> + Add<Output = T>,
-// {
-//     let mut result = vec![T::zero(); a.coeffs.len() + b.coeffs.len() - 1];
-//     for i in 0..a.coeffs.len() {
-//         for j in 0..b.coeffs.len() {
-//             result[i + j] = &result[i + j] + &(&a.coeffs[i] * &b.coeffs[j]);
-//         }
-//     }
-//     trim_zeros(&mut result);
-//     Polynomial { coeffs: result }
-// }
-
-/// Negacyclic convolution of two polynomials. i.e. Compute the polynomial
-/// `c` = `a` * `b` mod `x^n + 1`, which is in Zp[X]/(x^n + 1).
-pub fn negacyclic_convolution<T, const N: usize>(
+/// Multiply polynomials `a * b` with modulo x^n + 1 by using toeplitz matrix-vector multiplication.
+pub(crate) fn cyclic_mul<T, const N: usize>(
     a: &Polynomial<T, N>,
     b: &Polynomial<T, N>,
 ) -> Polynomial<T, N>
@@ -49,33 +32,34 @@ where
     T: Zero + Clone,
     for<'a> &'a T: Add<Output = T> + Mul<Output = T> + Sub<Output = T>,
 {
-    let (a, b) = if a.deg() < b.deg() { (a, b) } else { (b, a) };
-
-    let mut coeffs = vec![T::zero(); N];
-    for i in 0..N {
-        let a_coeff = a.coefficient(i);
-        if a_coeff.is_zero() {
-            continue;
-        }
+    // toeplitz matrix-vector multiplication
+    let mut result = vec![T::zero(); N];
+    for (i, result_i) in result.iter_mut().enumerate() {
         for j in 0..N {
-            let b_coeff = b.coefficient(j);
-            if b_coeff.is_zero() {
-                continue;
-            }
-
-            let c_i_j = &coeffs[(i + j) % N];
-            let pow = (i + j) / N;
-
-            if pow % 2 == 0 {
-                coeffs[(i + j) % N] = c_i_j + &(&a_coeff * &b_coeff);
-            } else {
-                coeffs[(i + j) % N] = c_i_j - &(&a_coeff * &b_coeff);
+            // only consider non-zero coefficients
+            if let Some(b_coeff) = b.coeffs.get(j) {
+                // Here computes the coefficient of Toeplitz matrix from the
+                // polynomial `a` at `(i, j)` under ring Z[x]/(x^n + 1).
+                // The Toeplitz matrix is in form (e.g. N = 4):
+                //
+                // [a_0, -a_3, -a_2, -a_1]
+                // [a_1, a_0, -a_3, -a_2]
+                // [a_2, a_1, a_0, -a_3]
+                // [a_3, a_2, a_1, a_0]
+                //
+                // and then apply the matrix-vector multiplication.
+                if i >= j {
+                    if let Some(a_coeff) = a.coeffs.get(i - j) {
+                        *result_i = &*result_i + &(a_coeff * b_coeff);
+                    }
+                } else if let Some(a_coeff) = a.coeffs.get(N - j + i) {
+                    *result_i = &*result_i - &(a_coeff * b_coeff);
+                }
             }
         }
     }
-    trim_zeros(&mut coeffs);
-
-    Polynomial { coeffs }
+    trim_zeros(&mut result);
+    Polynomial { coeffs: result }
 }
 
 /// Computes the pseudo remainder `r` of this polynomial `p` by another polynomial modulo.
@@ -189,13 +173,13 @@ mod tests {
     }
 
     #[test]
-    fn test_cyclic() {
+    fn test_cyclic_mul() {
         let rng = &mut rand::thread_rng();
         let a =
             Polynomial::<i32, N>::new((0..N).map(|_| rng.gen_range(0..100)).collect::<Vec<_>>());
 
         let p = Polynomial::<i32, N>::new(vec![0, 1]);
-        let rhs = negacyclic_convolution(&a, &p);
+        let rhs = cyclic_mul(&a, &p);
 
         // (x^n + 1)-cyclic lattice is an ideal in Z[x]/(x^n + 1)
         // (v_{0} + ... v_{n-2} x^{n-2} + v_{n-1} x^{n-1}) x = -v_{n-1} + v_{0} x + ... + v_{n-2} x^{n-1}

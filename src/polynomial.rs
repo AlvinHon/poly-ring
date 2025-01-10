@@ -154,7 +154,7 @@ where
             return Polynomial::zero();
         }
         // Different with arith::mul, this applies modulo operation.
-        arith::negacyclic_convolution(&self, &other)
+        arith::cyclic_mul(&self, &other)
     }
 }
 
