@@ -5,22 +5,25 @@ use num::{One, Zero};
 use crate::{modulo::PolynomialModulo, Polynomial};
 
 /// Add polynomials `a + b` without modulo.
-pub fn add<T, const N: usize>(a: &Polynomial<T, N>, b: &Polynomial<T, N>) -> Polynomial<T, N>
+pub(crate) fn add<T, const N: usize>(a: &Polynomial<T, N>, b: &Polynomial<T, N>) -> Polynomial<T, N>
 where
     T: Zero + Clone,
     for<'a> &'a T: Add<Output = T>,
 {
-    let mut result = vec![T::zero(); std::cmp::max(a.coeffs.len(), b.coeffs.len())];
-    for (i, r_i) in result.iter_mut().enumerate() {
-        if i < a.coeffs.len() {
-            *r_i = &*r_i + &a.coeffs[i];
-        }
-        if i < b.coeffs.len() {
-            *r_i = &*r_i + &b.coeffs[i];
-        }
-    }
-    trim_zeros(&mut result);
-    Polynomial { coeffs: result }
+    let (a, b) = if a.coeffs.len() < b.coeffs.len() {
+        (b, a)
+    } else {
+        (a, b)
+    };
+    let mut coeffs = a.coeffs.clone();
+    coeffs
+        .iter_mut()
+        .zip(b.coeffs.iter())
+        .for_each(|(a_i, b_i)| {
+            *a_i = &*a_i + b_i;
+        });
+    trim_zeros(&mut coeffs);
+    Polynomial { coeffs }
 }
 
 /// Multiply polynomials `a * b` with modulo x^n + 1 by using toeplitz matrix-vector multiplication.
@@ -33,33 +36,39 @@ where
     for<'a> &'a T: Add<Output = T> + Mul<Output = T> + Sub<Output = T>,
 {
     // toeplitz matrix-vector multiplication
-    let mut result = vec![T::zero(); N];
-    for (i, result_i) in result.iter_mut().enumerate() {
-        for j in 0..N {
-            // only consider non-zero coefficients
-            if let Some(b_coeff) = b.coeffs.get(j) {
-                // Here computes the coefficient of Toeplitz matrix from the
-                // polynomial `a` at `(i, j)` under ring Z[x]/(x^n + 1).
-                // The Toeplitz matrix is in form (e.g. N = 4):
-                //
-                // [a_0, -a_3, -a_2, -a_1]
-                // [a_1, a_0, -a_3, -a_2]
-                // [a_2, a_1, a_0, -a_3]
-                // [a_3, a_2, a_1, a_0]
-                //
-                // and then apply the matrix-vector multiplication.
-                if i >= j {
-                    if let Some(a_coeff) = a.coeffs.get(i - j) {
-                        *result_i = &*result_i + &(a_coeff * b_coeff);
-                    }
-                } else if let Some(a_coeff) = a.coeffs.get(N - j + i) {
-                    *result_i = &*result_i - &(a_coeff * b_coeff);
-                }
+    let mut coeffs = vec![T::zero(); N];
+
+    // only consider non-zero coefficients
+    for j in 0..b.coeffs.len() {
+        let b_coeff = &b.coeffs[j];
+
+        // Here computes the coefficient of Toeplitz matrix from the
+        // polynomial `a` at `(i, j)` under ring Z[x]/(x^n + 1).
+        // The Toeplitz matrix is in form (e.g. N = 4):
+        //
+        // [a_0, -a_3, -a_2, -a_1]
+        // [a_1, a_0, -a_3, -a_2]
+        // [a_2, a_1, a_0, -a_3]
+        // [a_3, a_2, a_1, a_0]
+        //
+        // and then apply the matrix-vector multiplication.
+
+        // case i < j
+        for i in 0..j {
+            if let Some(a_coeff) = a.coeffs.get(N - j + i) {
+                coeffs[i] = &coeffs[i] - &(a_coeff * b_coeff);
+            }
+        }
+
+        // case i >= j
+        for i in j..N {
+            if let Some(a_coeff) = a.coeffs.get(i - j) {
+                coeffs[i] = &coeffs[i] + &(a_coeff * b_coeff);
             }
         }
     }
-    trim_zeros(&mut result);
-    Polynomial { coeffs: result }
+    trim_zeros(&mut coeffs);
+    Polynomial { coeffs }
 }
 
 /// Computes the pseudo remainder `r` of this polynomial `p` by another polynomial modulo.
