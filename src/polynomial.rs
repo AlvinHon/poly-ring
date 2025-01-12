@@ -67,6 +67,11 @@ impl<T, const N: usize> Polynomial<T, N> {
             coeffs: self.coeffs.iter().map(f).collect(),
         }
     }
+
+    /// Returns an iterator over the polynomial coefficients.
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.coeffs.iter()
+    }
 }
 
 impl<T, const N: usize> One for Polynomial<T, N>
@@ -194,5 +199,15 @@ mod tests {
         let p = Polynomial::<i32, N>::new(vec![1, 2, 3]);
         let q = p.mapv(|c| *c as i64);
         assert_eq!(q.coeffs, vec![1i64, 2, 3]);
+    }
+
+    #[test]
+    fn test_iter() {
+        let p = Polynomial::<i32, N>::new(vec![1, 2, 3]);
+        let mut iter = p.iter();
+        assert_eq!(iter.next(), Some(&1));
+        assert_eq!(iter.next(), Some(&2));
+        assert_eq!(iter.next(), Some(&3));
+        assert_eq!(iter.next(), None);
     }
 }
