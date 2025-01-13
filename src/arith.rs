@@ -57,6 +57,8 @@ where
         for i in 0..j {
             if let Some(a_coeff) = a.coeffs.get(N - j + i) {
                 coeffs[i] = &coeffs[i] - &(a_coeff * b_coeff);
+            } else {
+                break;
             }
         }
 
@@ -64,6 +66,8 @@ where
         for i in j..N {
             if let Some(a_coeff) = a.coeffs.get(i - j) {
                 coeffs[i] = &coeffs[i] + &(a_coeff * b_coeff);
+            } else {
+                break;
             }
         }
     }
