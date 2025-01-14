@@ -13,7 +13,8 @@ pub struct Polynomial<T, const N: usize> {
 }
 
 impl<T, const N: usize> Polynomial<T, N> {
-    /// Creates a new polynomial with the given coefficients.
+    /// Creates a new polynomial within Z[x]/[x^n + 1] with the given coefficients.
+    ///
     /// p(x) = coeffs\[0\] + coeffs\[1\] * x + coeffs\[2\] * x^2 + ...
     ///
     /// ## Safety
@@ -25,13 +26,33 @@ impl<T, const N: usize> Polynomial<T, N> {
         assert_eq!(N.count_ones(), 1, "N must be a power of two");
         assert!(
             coeffs.len() <= N,
-            "The degree of the polynomial must be less than N"
+            "The degree of the polynomial must be less than or equal to N"
         );
 
         let mut coeffs = coeffs;
         trim_zeros(&mut coeffs);
 
         Polynomial { coeffs }
+    }
+
+    /// Creates a new polynomial within Z[x]/[x^n + 1] by applying modulo x^n + 1 of a the input
+    /// polynomial with the given coefficients (length can be larger than N).
+    ///
+    /// p(x) = coeffs\[0\] + coeffs\[1\] * x + coeffs\[2\] * x^2 + ...
+    ///
+    /// ## Safety
+    /// The constant N must be a power of two, so that the polynomial is irreducible over Z.
+    pub fn from_coeffs(coeffs: Vec<T>) -> Self
+    where
+        T: Zero + One + Clone,
+        for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+    {
+        assert_eq!(N.count_ones(), 1, "N must be a power of two");
+
+        let mut coeffs = coeffs;
+        trim_zeros(&mut coeffs);
+
+        arith::modulo(&Polynomial { coeffs }, &PolynomialModulo::<T, N>::new())
     }
 
     /// Returns the degree of the polynomial.
@@ -174,6 +195,12 @@ mod tests {
     fn test_new() {
         const INVALID_N: usize = 511;
         Polynomial::<i32, INVALID_N>::new(vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn test_from_coeffs() {
+        let p = Polynomial::<i32, 4>::from_coeffs(vec![1, 2, 3, 4, 5]);
+        assert_eq!(p.coeffs, vec![-4, 2, 3, 4]);
     }
 
     #[test]
