@@ -52,7 +52,7 @@ impl<T, const N: usize> Polynomial<T, N> {
         let mut coeffs = coeffs;
         trim_zeros(&mut coeffs);
 
-        arith::modulo(&Polynomial { coeffs }, &PolynomialModulo::<T, N>::new())
+        arith::modulo(Polynomial { coeffs }, PolynomialModulo::<T, N>::new())
     }
 
     /// Returns the degree of the polynomial.
@@ -130,11 +130,10 @@ where
 {
     type Output = Self;
 
-    #[allow(clippy::needless_borrow)]
     fn add(self, other: Self) -> Self {
-        let ret = arith::add(&self, &other);
+        let ret = arith::add(self, other);
         let modulo = PolynomialModulo::<T, N>::new();
-        arith::modulo(&ret, &modulo)
+        arith::modulo(ret, modulo)
     }
 }
 
@@ -159,11 +158,10 @@ where
 {
     type Output = Self;
 
-    #[allow(clippy::needless_borrow)]
     fn sub(self, other: Self) -> Self {
-        let ret = arith::add(&self, &(-other));
+        let ret = arith::add(self, -other);
         let modulo = PolynomialModulo::<T, N>::new();
-        arith::modulo(&ret, &modulo)
+        arith::modulo(ret, modulo)
     }
 }
 

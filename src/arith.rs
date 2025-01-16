@@ -5,7 +5,7 @@ use num::{One, Zero};
 use crate::{modulo::PolynomialModulo, Polynomial};
 
 /// Add polynomials `a + b` without modulo.
-pub(crate) fn add<T, const N: usize>(a: &Polynomial<T, N>, b: &Polynomial<T, N>) -> Polynomial<T, N>
+pub(crate) fn add<T, const N: usize>(a: Polynomial<T, N>, b: Polynomial<T, N>) -> Polynomial<T, N>
 where
     T: Zero + Clone,
     for<'a> &'a T: Add<Output = T>,
@@ -15,7 +15,7 @@ where
     } else {
         (a, b)
     };
-    let mut coeffs = a.coeffs.clone();
+    let mut coeffs = a.coeffs;
     coeffs
         .iter_mut()
         .zip(b.coeffs.iter())
@@ -78,8 +78,8 @@ where
 /// Computes the pseudo remainder `r` of this polynomial `p` by another polynomial modulo.
 /// i.e. `r = p - q * d` where `q` is the quotient of the division.
 pub fn modulo<T, const N: usize>(
-    p: &Polynomial<T, N>,
-    modulo: &PolynomialModulo<T, N>,
+    p: Polynomial<T, N>,
+    modulo: PolynomialModulo<T, N>,
 ) -> Polynomial<T, N>
 where
     T: Zero + One + Clone,
@@ -90,12 +90,12 @@ where
     }
 
     if p.deg() < modulo.deg() {
-        return p.clone();
+        return p;
     }
 
     // Polynomial Pseudo-Division (Wu's method, https://en.wikipedia.org/wiki/Wu%27s_method_of_characteristic_set)
     // Variable names are using the notations from the reference: https://aszanto.math.ncsu.edu/MA722/ln-02.pdf
-    let mut r = p.clone(); // r = f
+    let mut r = p; // r = f
     let s = modulo.deg();
     let b_s = modulo.leading_coefficient();
     while !r.is_zero() && r.deg() >= s {
@@ -143,22 +143,22 @@ mod tests {
     fn test_add() {
         let p1 = Polynomial::<i32, N>::new(vec![1, 2, 3]);
         let p2 = Polynomial::new(vec![4, 5]);
-        let r = add(&p1, &p2);
+        let r = add(p1, p2);
         assert_eq!(r.coeffs, vec![5, 7, 3]);
 
         let p1 = Polynomial::<i32, N>::new(vec![2, 1]);
         let p2 = Polynomial::new(vec![5, 4, 3]);
-        let r = add(&p1, &p2);
+        let r = add(p1, p2);
         assert_eq!(r.coeffs, vec![7, 5, 3]);
 
         let p1 = Polynomial::<i32, N>::new(vec![1, 2, 3]);
         let p2 = Polynomial::zero();
-        let r = add(&p1, &p2);
+        let r = add(p1, p2);
         assert_eq!(r.coeffs, vec![1, 2, 3]);
 
         let p1 = Polynomial::<i32, N>::zero();
         let p2 = Polynomial::new(vec![1, 2, 3]);
-        let r = add(&p1, &p2);
+        let r = add(p1, p2);
         assert_eq!(r.coeffs, vec![1, 2, 3]);
     }
 
@@ -166,22 +166,22 @@ mod tests {
     fn test_neg() {
         let p1 = Polynomial::<i32, N>::new(vec![1, 2, 3]);
         let p2 = Polynomial::new(vec![4, 5]);
-        let r = add(&p1, &p2.neg());
+        let r = add(p1, p2.neg());
         assert_eq!(r.coeffs, vec![-3, -3, 3]);
 
         let p1 = Polynomial::<i32, N>::new(vec![2, 1]);
         let p2 = Polynomial::new(vec![5, 4, 3]);
-        let r = add(&p1, &p2.neg());
+        let r = add(p1, p2.neg());
         assert_eq!(r.coeffs, vec![-3, -3, -3]);
 
         let p1 = Polynomial::<i32, N>::new(vec![1, 2, 3]);
         let p2 = Polynomial::zero();
-        let r = add(&p1, &p2.neg());
+        let r = add(p1, p2.neg());
         assert_eq!(r.coeffs, vec![1, 2, 3]);
 
         let p1 = Polynomial::<i32, N>::zero();
         let p2 = Polynomial::new(vec![1, 2, 3]);
-        let r = add(&p1, &p2.neg());
+        let r = add(p1, p2.neg());
         assert_eq!(r.coeffs, vec![-1, -2, -3]);
     }
 

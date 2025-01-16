@@ -3,7 +3,7 @@ use rand::Rng;
 
 criterion_group!(
     benches,
-    bench_polynomial_ring_multiplication,
+    // bench_polynomial_ring_multiplication,
     bench_polynomial_ring_addition
 );
 
@@ -23,9 +23,13 @@ pub fn bench_polynomial_ring_multiplication(c: &mut Criterion) {
     let q = poly_ring::Polynomial::<_, N>::new(q_coeffs.clone());
 
     group.bench_function("poly_ring", |b| {
-        b.iter(|| {
-            let _ = p.clone() * q.clone();
-        })
+        b.iter_batched(
+            || (p.clone(), q.clone()),
+            |(p, q)| {
+                let _ = p * q;
+            },
+            criterion::BatchSize::SmallInput,
+        );
     });
 
     // crate: polynomial_ring
