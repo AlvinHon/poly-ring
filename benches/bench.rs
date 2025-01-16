@@ -3,7 +3,7 @@ use rand::Rng;
 
 criterion_group!(
     benches,
-    // bench_polynomial_ring_multiplication,
+    bench_polynomial_ring_multiplication,
     bench_polynomial_ring_addition
 );
 

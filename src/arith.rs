@@ -27,6 +27,7 @@ where
 }
 
 /// Multiply polynomials `a * b` with modulo x^n + 1 by using toeplitz matrix-vector multiplication.
+#[allow(clippy::needless_range_loop)] // allow for better performance
 pub(crate) fn cyclic_mul<T, const N: usize>(
     a: &Polynomial<T, N>,
     b: &Polynomial<T, N>,
