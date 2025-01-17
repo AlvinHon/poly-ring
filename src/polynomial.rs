@@ -17,6 +17,14 @@ impl<T, const N: usize> Polynomial<T, N> {
     ///
     /// p(x) = coeffs\[0\] + coeffs\[1\] * x + coeffs\[2\] * x^2 + ...
     ///
+    /// ## Example
+    /// ```
+    /// use poly_ring_xnp1::Polynomial;
+    /// // p(x) = 1 + 2x + 3x^2
+    /// let p = Polynomial::<i32, 4>::new(vec![1, 2, 3]);
+    /// assert_eq!(p.deg(), 2);
+    /// ```
+    ///
     /// ## Safety
     /// The constant N must be a power of two, so that the polynomial is irreducible over Z.
     pub fn new(coeffs: Vec<T>) -> Self
@@ -40,6 +48,21 @@ impl<T, const N: usize> Polynomial<T, N> {
     ///
     /// p(x) = coeffs\[0\] + coeffs\[1\] * x + coeffs\[2\] * x^2 + ...
     ///
+    /// ## Example
+    ///
+    /// ```
+    /// use poly_ring_xnp1::Polynomial;
+    ///
+    /// // p(x) = (1 + 2x + 3x^2 + 4x^3 + 5x^4) mod (x^4 + 1)
+    /// let p = Polynomial::<i32, 4>::from_coeffs(vec![1, 2, 3, 4, 5]);
+    /// let mut coeffs_itr = p.iter();
+    /// assert_eq!(coeffs_itr.next(), Some(&-4));
+    /// assert_eq!(coeffs_itr.next(), Some(&2));
+    /// assert_eq!(coeffs_itr.next(), Some(&3));
+    /// assert_eq!(coeffs_itr.next(), Some(&4));
+    /// assert_eq!(coeffs_itr.next(), None);
+    /// ```
+    ///
     /// ## Safety
     /// The constant N must be a power of two, so that the polynomial is irreducible over Z.
     pub fn from_coeffs(coeffs: Vec<T>) -> Self
@@ -57,13 +80,33 @@ impl<T, const N: usize> Polynomial<T, N> {
 
     /// Returns the degree of the polynomial.
     ///
+    /// ## Example
+    ///
+    /// ```
+    /// use poly_ring_xnp1::Polynomial;
+    ///
+    /// // p(x) = 1 + 2x + 3x^2
+    /// let p = Polynomial::<i32, 4>::new(vec![1, 2, 3]);
+    /// assert_eq!(p.deg(), 2);
+    /// ```
+    ///
     /// ## Panics
     /// Panics if the input is an empty vector.
     pub fn deg(&self) -> usize {
         self.coeffs.len() - 1
     }
 
-    /// Returns the leading coefficient of the polynomial.
+    /// Returns the leading coefficient of the polynomial. If the polynomial is zero, it returns 0 (T::zero).
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// use poly_ring_xnp1::Polynomial;
+    ///
+    /// // p(x) = 1 + 2x + 3x^2
+    /// let p = Polynomial::<i32, 4>::new(vec![1, 2, 3]);
+    /// assert_eq!(p.leading_coefficient(), 3);
+    /// ```
     pub fn leading_coefficient(&self) -> T
     where
         T: Zero + Clone,
@@ -72,6 +115,18 @@ impl<T, const N: usize> Polynomial<T, N> {
     }
 
     /// Returns the coefficient of the term with the given degree.
+    ///
+    /// ## Example
+    /// ```
+    /// use poly_ring_xnp1::Polynomial;
+    ///
+    /// // p(x) = 1 + 2x + 3x^2
+    /// let p = Polynomial::<i32, 4>::new(vec![1, 2, 3]);
+    /// assert_eq!(p.coefficient(0), 1);
+    /// assert_eq!(p.coefficient(1), 2);
+    /// assert_eq!(p.coefficient(2), 3);
+    /// assert_eq!(p.coefficient(3), 0); // 0 (T::zero) for the missing term
+    /// ```
     pub fn coefficient(&self, idx: usize) -> T
     where
         T: Zero + Clone,
@@ -80,6 +135,19 @@ impl<T, const N: usize> Polynomial<T, N> {
     }
 
     /// Maps the polynomial coefficients to another type.
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// use poly_ring_xnp1::Polynomial;
+    ///
+    /// // p(x) = 1 + 2x + 3x^2
+    /// let p = Polynomial::<i32, 4>::new(vec![1, 2, 3]);
+    /// let q = p.mapv(|c| *c as i64);
+    /// assert_eq!(q.coefficient(0), 1i64);
+    /// assert_eq!(q.coefficient(1), 2i64);
+    /// assert_eq!(q.coefficient(2), 3i64);
+    /// ```
     pub fn mapv<U, F>(&self, f: F) -> Polynomial<U, N>
     where
         F: Fn(&T) -> U,
@@ -186,53 +254,16 @@ where
 mod tests {
     use super::*;
 
-    const N: usize = 512; // power of two
-
     #[test]
     #[should_panic]
     fn test_new() {
-        const INVALID_N: usize = 511;
+        const INVALID_N: usize = 5;
         Polynomial::<i32, INVALID_N>::new(vec![1, 2, 3]);
     }
 
     #[test]
-    fn test_from_coeffs() {
-        let p = Polynomial::<i32, 4>::from_coeffs(vec![1, 2, 3, 4, 5]);
-        assert_eq!(p.coeffs, vec![-4, 2, 3, 4]);
-    }
-
-    #[test]
     fn test_zero() {
-        let p = Polynomial::<i32, N>::zero();
+        let p = Polynomial::<i32, 4>::zero();
         assert!(p.is_zero());
-    }
-
-    #[test]
-    fn test_deg() {
-        let p = Polynomial::<i32, N>::new(vec![1, 2, 3]);
-        assert_eq!(p.deg(), 2);
-    }
-
-    #[test]
-    fn test_leading_coefficient() {
-        let p = Polynomial::<i32, N>::new(vec![1, 2, 3]);
-        assert_eq!(p.leading_coefficient(), 3);
-    }
-
-    #[test]
-    fn test_mapv() {
-        let p = Polynomial::<i32, N>::new(vec![1, 2, 3]);
-        let q = p.mapv(|c| *c as i64);
-        assert_eq!(q.coeffs, vec![1i64, 2, 3]);
-    }
-
-    #[test]
-    fn test_iter() {
-        let p = Polynomial::<i32, N>::new(vec![1, 2, 3]);
-        let mut iter = p.iter();
-        assert_eq!(iter.next(), Some(&1));
-        assert_eq!(iter.next(), Some(&2));
-        assert_eq!(iter.next(), Some(&3));
-        assert_eq!(iter.next(), None);
     }
 }
