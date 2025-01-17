@@ -19,8 +19,8 @@ pub fn bench_polynomial_ring_multiplication(c: &mut Criterion) {
     let mut group = c.benchmark_group("Polynomial Ring Multiplication");
 
     // this crate
-    let p = poly_ring::Polynomial::<_, N>::new(p_coeffs.clone());
-    let q = poly_ring::Polynomial::<_, N>::new(q_coeffs.clone());
+    let p = poly_ring_xnp1::Polynomial::<_, N>::new(p_coeffs.clone());
+    let q = poly_ring_xnp1::Polynomial::<_, N>::new(q_coeffs.clone());
 
     group.bench_function("poly_ring", |b| {
         b.iter_batched(
@@ -58,8 +58,8 @@ pub fn bench_polynomial_ring_addition(c: &mut Criterion) {
     let mut group = c.benchmark_group("Polynomial Ring Addition");
 
     // this crate
-    let p = poly_ring::Polynomial::<_, N>::new(p_coeffs.clone());
-    let q = poly_ring::Polynomial::<_, N>::new(q_coeffs.clone());
+    let p = poly_ring_xnp1::Polynomial::<_, N>::new(p_coeffs.clone());
+    let q = poly_ring_xnp1::Polynomial::<_, N>::new(q_coeffs.clone());
 
     group.bench_function("poly_ring", |b| {
         b.iter(|| {

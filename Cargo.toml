@@ -1,16 +1,16 @@
 [package]
-name = "poly-ring"
+name = "poly-ring-xnp1"
 version = "0.1.0"
 authors = ["AlvinHon <alvin.cpp@gmail.com>"]
 edition = "2021"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/AlvinHon/poly-ring"
-description = "An implementation of polynomial ring Z[x]/(x^n+1)"
+description = "Library for arithmetics in Polynomial ring Z[x]/(x^n+1) for lattice-based cryptography"
 
 
 [lib]
-name = "poly_ring"
+name = "poly_ring_xnp1"
 path = "src/lib.rs"
 
 [dependencies]
