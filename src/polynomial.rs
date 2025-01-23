@@ -91,7 +91,7 @@ impl<T, const N: usize> Polynomial<T, N> {
     /// ```
     ///
     /// ## Panics
-    /// Panics if the input is an empty vector.
+    /// Panics if the coefficients is an empty vector.
     pub fn deg(&self) -> usize {
         self.coeffs.len() - 1
     }
@@ -159,7 +159,28 @@ impl<T, const N: usize> Polynomial<T, N> {
         Polynomial { coeffs }
     }
 
-    /// Returns an iterator over the polynomial coefficients.
+    /// Iterates over the polynomial coefficients and applies the given mutation function.
+    ///
+    /// ```
+    /// use poly_ring_xnp1::Polynomial;
+    /// use num::Zero;
+    ///
+    /// // p(x) = 1 + 2x + 3x^2
+    /// let mut p = Polynomial::<i32, 4>::new(vec![1, 2, 3]);
+    /// p.coeffs_mut(|c| *c = 0);
+    /// assert!(p.is_zero());
+    /// ```
+    pub fn coeffs_mut<F>(&mut self, f: F)
+    where
+        T: Zero,
+        F: FnMut(&mut T),
+    {
+        self.coeffs.iter_mut().for_each(f);
+        trim_zeros(&mut self.coeffs);
+    }
+
+    /// Returns an iterator over the polynomial coefficients, where the polynomial
+    /// is represented by p(x) = coeffs\[0\] + coeffs\[1\] * x + coeffs\[2\] * x^2 + ...
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         self.coeffs.iter()
     }
