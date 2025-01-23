@@ -150,11 +150,13 @@ impl<T, const N: usize> Polynomial<T, N> {
     /// ```
     pub fn mapv<U, F>(&self, f: F) -> Polynomial<U, N>
     where
+        U: Zero,
         F: Fn(&T) -> U,
     {
-        Polynomial {
-            coeffs: self.coeffs.iter().map(f).collect(),
-        }
+        let mut coeffs = self.coeffs.iter().map(f).collect();
+        trim_zeros(&mut coeffs);
+
+        Polynomial { coeffs }
     }
 
     /// Returns an iterator over the polynomial coefficients.
