@@ -2,7 +2,7 @@ use std::ops::{Add, Mul, Sub};
 
 use num::{One, Zero};
 
-use crate::{modulo::PolynomialModulo, Polynomial};
+use crate::{modulo::PolynomialModulus, Polynomial};
 
 /// Add polynomials `a + b` without modulo.
 pub(crate) fn add<T, const N: usize>(a: Polynomial<T, N>, b: Polynomial<T, N>) -> Polynomial<T, N>
@@ -78,9 +78,9 @@ where
 
 /// Computes the pseudo remainder `r` of this polynomial `p` by another polynomial modulo.
 /// i.e. `r = p - q * d` where `q` is the quotient of the division.
-pub fn modulo<T, const N: usize>(
+pub(crate) fn modulo<T, const N: usize>(
     p: Polynomial<T, N>,
-    modulo: PolynomialModulo<T, N>,
+    modulus: PolynomialModulus<T>,
 ) -> Polynomial<T, N>
 where
     T: Zero + One + Clone,
@@ -90,15 +90,15 @@ where
         return Polynomial::zero();
     }
 
-    if p.deg() < modulo.deg() {
+    if p.deg() < modulus.deg() {
         return p;
     }
 
     // Polynomial Pseudo-Division (Wu's method, https://en.wikipedia.org/wiki/Wu%27s_method_of_characteristic_set)
     // Variable names are using the notations from the reference: https://aszanto.math.ncsu.edu/MA722/ln-02.pdf
     let mut r = p; // r = f
-    let s = modulo.deg();
-    let b_s = modulo.leading_coefficient();
+    let s = modulus.deg();
+    let b_s = modulus.leading_coefficient();
     while !r.is_zero() && r.deg() >= s {
         // deg_y(r) - s
         let pow_y = r.deg() - s;
@@ -108,7 +108,7 @@ where
             let term: T = if i < pow_y {
                 T::zero()
             } else {
-                &lc_r * &modulo.coefficient(i - pow_y)
+                &lc_r * &modulus.coefficient(i - pow_y)
             };
             r.coeffs[i] = &(&b_s * &r.coeffs[i]) - &term;
         }

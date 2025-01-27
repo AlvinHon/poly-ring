@@ -1,6 +1,6 @@
 use crate::{
     arith::{self, trim_zeros},
-    modulo::PolynomialModulo,
+    modulo::PolynomialModulus,
 };
 use num::{One, Zero};
 use std::ops::{Add, Mul, Neg, Sub};
@@ -75,7 +75,7 @@ impl<T, const N: usize> Polynomial<T, N> {
         let mut coeffs = coeffs;
         trim_zeros(&mut coeffs);
 
-        arith::modulo(Polynomial { coeffs }, PolynomialModulo::<T, N>::new())
+        arith::modulo(Polynomial { coeffs }, PolynomialModulus::<T>::new(N))
     }
 
     /// Returns the degree of the polynomial.
@@ -223,7 +223,7 @@ where
 
     fn add(self, other: Self) -> Self {
         let ret = arith::add(self, other);
-        let modulo = PolynomialModulo::<T, N>::new();
+        let modulo = PolynomialModulus::<T>::new(N);
         arith::modulo(ret, modulo)
     }
 }
@@ -251,7 +251,7 @@ where
 
     fn sub(self, other: Self) -> Self {
         let ret = arith::add(self, -other);
-        let modulo = PolynomialModulo::<T, N>::new();
+        let modulo = PolynomialModulus::<T>::new(N);
         arith::modulo(ret, modulo)
     }
 }
