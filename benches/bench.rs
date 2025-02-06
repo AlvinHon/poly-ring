@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use rand::Rng;
+use rand::{rng, Rng};
 
 criterion_group!(
     benches,
@@ -12,9 +12,13 @@ criterion_main!(benches);
 const N: usize = 512; // power of two
 
 pub fn bench_polynomial_ring_multiplication(c: &mut Criterion) {
-    let rng = &mut rand::thread_rng();
-    let p_coeffs = (0..N).map(|_| rng.gen_range(-100..100)).collect::<Vec<_>>();
-    let q_coeffs = (0..N).map(|_| rng.gen_range(-100..100)).collect::<Vec<_>>();
+    let rng = &mut rng();
+    let p_coeffs = (0..N)
+        .map(|_| rng.random_range(-100..100))
+        .collect::<Vec<_>>();
+    let q_coeffs = (0..N)
+        .map(|_| rng.random_range(-100..100))
+        .collect::<Vec<_>>();
 
     let mut group = c.benchmark_group("Polynomial Ring Multiplication");
 
@@ -51,9 +55,13 @@ pub fn bench_polynomial_ring_multiplication(c: &mut Criterion) {
 }
 
 pub fn bench_polynomial_ring_addition(c: &mut Criterion) {
-    let rng = &mut rand::thread_rng();
-    let p_coeffs = (0..N).map(|_| rng.gen_range(-100..100)).collect::<Vec<_>>();
-    let q_coeffs = (0..N).map(|_| rng.gen_range(-100..100)).collect::<Vec<_>>();
+    let rng = &mut rng();
+    let p_coeffs = (0..N)
+        .map(|_| rng.random_range(-100..100))
+        .collect::<Vec<_>>();
+    let q_coeffs = (0..N)
+        .map(|_| rng.random_range(-100..100))
+        .collect::<Vec<_>>();
 
     let mut group = c.benchmark_group("Polynomial Ring Addition");
 

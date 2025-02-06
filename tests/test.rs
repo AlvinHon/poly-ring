@@ -1,15 +1,15 @@
 use num::{One, Zero};
 use poly_ring_xnp1::Polynomial;
 use rand::{
-    distributions::uniform::{SampleRange, SampleUniform},
-    Rng,
+    distr::uniform::{SampleRange, SampleUniform},
+    rng, Rng,
 };
 
 const N: usize = 512; // power of two
 
 #[test]
 fn test_abelian_group_under_addition() {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut rng();
     for _ in 0..100 {
         let a = rand_polynomial::<N, _, _, _>(rng, -100..100);
         let b = rand_polynomial::<N, _, _, _>(rng, -100..100);
@@ -37,7 +37,7 @@ fn test_abelian_group_under_addition() {
 
 #[test]
 fn test_monoid_under_multiplication() {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut rng();
     for _ in 0..100 {
         let a = rand_polynomial::<N, _, _, _>(rng, -100..100);
         let b = rand_polynomial::<N, _, _, _>(rng, -100..100);
@@ -57,7 +57,7 @@ fn test_monoid_under_multiplication() {
 
 #[test]
 fn test_multiplication_distributive_wrt_addition() {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut rng();
     for _ in 0..100 {
         let a = rand_polynomial::<N, _, _, _>(rng, -100..100);
         let b = rand_polynomial::<N, _, _, _>(rng, -100..100);
@@ -80,10 +80,10 @@ where
     R: Rng,
     G: SampleRange<T> + Clone,
 {
-    let coeff_size = rng.gen_range(1..N);
+    let coeff_size = rng.random_range(1..N);
     Polynomial::new(
         (0..coeff_size)
-            .map(|_| rng.gen_range(range.clone()))
+            .map(|_| rng.random_range(range.clone()))
             .collect(),
     )
 }

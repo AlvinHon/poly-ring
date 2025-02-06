@@ -78,6 +78,7 @@ where
 
 /// Computes the pseudo remainder `r` of this polynomial `p` by another polynomial modulo.
 /// i.e. `r = p - q * d` where `q` is the quotient of the division.
+/// Note that it only works for monic modulus (i.e. leading coefficient is 1).
 pub(crate) fn modulo<T, const N: usize>(
     p: Polynomial<T, N>,
     modulus: PolynomialModulus<T>,
@@ -188,9 +189,9 @@ mod tests {
 
     #[test]
     fn test_cyclic_mul() {
-        let rng = &mut rand::thread_rng();
+        let rng = &mut rand::rng();
         let a =
-            Polynomial::<i32, N>::new((0..N).map(|_| rng.gen_range(0..100)).collect::<Vec<_>>());
+            Polynomial::<i32, N>::new((0..N).map(|_| rng.random_range(0..100)).collect::<Vec<_>>());
 
         let p = Polynomial::<i32, N>::new(vec![0, 1]);
         let rhs = cyclic_mul(&a, &p);
