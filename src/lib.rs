@@ -4,3 +4,6 @@ pub(crate) mod arith;
 pub(crate) mod modulo;
 pub mod polynomial;
 pub use polynomial::Polynomial;
+
+#[cfg(feature = "zq")]
+pub mod zq;

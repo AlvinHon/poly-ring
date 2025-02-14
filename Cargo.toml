@@ -1,6 +1,6 @@
 [package]
 name = "poly-ring-xnp1"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["AlvinHon <alvin.cpp@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -12,6 +12,11 @@ description = "Library for arithmetics in Polynomial ring Z[x]/(x^n+1) for latti
 [lib]
 name = "poly_ring_xnp1"
 path = "src/lib.rs"
+
+
+[features]
+default = []
+zq = []
 
 [dependencies]
 num = "0.4"

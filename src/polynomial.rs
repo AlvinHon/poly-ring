@@ -275,6 +275,7 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
@@ -288,5 +289,39 @@ mod tests {
     fn test_zero() {
         let p = Polynomial::<i32, 4>::zero();
         assert!(p.is_zero());
+    }
+
+    #[cfg(feature = "zq")]
+    #[test]
+    fn test_poly_over_zq() {
+        use crate::{
+            zq::{ZqI32, ZqI64, ZqU32, ZqU64},
+            zqi32_vec, zqi64_vec, zqu32_vec, zqu64_vec,
+        };
+
+        // p is the polynomial 1 + 2x + 3x^2 where the coefficients are in Z/7Z.
+        let p = Polynomial::<_, 4>::new(zqi32_vec![1,2,3; 7]);
+        assert_eq!(p.deg(), 2);
+        assert_eq!(p.coefficient(0), ZqI32::new(1));
+        assert_eq!(p.coefficient(1), ZqI32::new(2));
+        assert_eq!(p.coefficient(2), ZqI32::new(3));
+
+        let p = Polynomial::<_, 4>::new(zqi64_vec![1,2,3; 7]);
+        assert_eq!(p.deg(), 2);
+        assert_eq!(p.coefficient(0), ZqI64::new(1));
+        assert_eq!(p.coefficient(1), ZqI64::new(2));
+        assert_eq!(p.coefficient(2), ZqI64::new(3));
+
+        let p = Polynomial::<_, 4>::new(zqu32_vec![1,2,3; 7]);
+        assert_eq!(p.deg(), 2);
+        assert_eq!(p.coefficient(0), ZqU32::new(1));
+        assert_eq!(p.coefficient(1), ZqU32::new(2));
+        assert_eq!(p.coefficient(2), ZqU32::new(3));
+
+        let p = Polynomial::<_, 4>::new(zqu64_vec![1,2,3; 7]);
+        assert_eq!(p.deg(), 2);
+        assert_eq!(p.coefficient(0), ZqU64::new(1));
+        assert_eq!(p.coefficient(1), ZqU64::new(2));
+        assert_eq!(p.coefficient(2), ZqU64::new(3));
     }
 }
