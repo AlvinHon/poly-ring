@@ -4,10 +4,7 @@ use num::{One, Zero};
 
 /// Represents a Polynomial Modulus `x^n + alpha` used in polynomial division algorithm in this library.
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
-pub(crate) struct PolynomialModulus<T>
-where
-    T: One + Zero + Clone,
-{
+pub(crate) struct PolynomialModulus<T> {
     n: usize,
     alpha: T,
     phantom: PhantomData<T>,

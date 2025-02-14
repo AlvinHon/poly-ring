@@ -7,7 +7,7 @@ use crate::{modulo::PolynomialModulus, Polynomial};
 /// Add polynomials `a + b` without modulo.
 pub(crate) fn add<T, const N: usize>(a: Polynomial<T, N>, b: Polynomial<T, N>) -> Polynomial<T, N>
 where
-    T: Zero + Clone,
+    T: Zero,
     for<'a> &'a T: Add<Output = T>,
 {
     let (a, b) = if a.coeffs.len() < b.coeffs.len() {
