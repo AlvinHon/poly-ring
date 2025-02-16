@@ -13,6 +13,7 @@ pub fn benches() {
     // bench methods for feature "zq"
     #[cfg(feature = "zq")]
     {
+        bench_polynomial_ring_addition_over_zq(c);
         bench_polynomial_ring_multiplication_over_zq(c);
     }
 }
@@ -101,6 +102,67 @@ pub fn bench_polynomial_ring_addition(c: &mut Criterion) {
     group.bench_function("polynomial_ring", |b| {
         b.iter(|| {
             let _ = (&p + &q).division(&modulo);
+        })
+    });
+}
+
+#[cfg(feature = "zq")]
+fn bench_polynomial_ring_addition_over_zq(c: &mut Criterion) {
+    use abstalg::{CommuntativeMonoid, PolynomialAlgebra, QuotientField, QuotientRing, I32};
+
+    let rng = &mut rng();
+
+    const Q: u32 = 7;
+
+    let p_coeffs = (0..N)
+        .map(|_| rng.random_range(0..7u32))
+        .collect::<Vec<_>>();
+    let q_coeffs = (0..N)
+        .map(|_| rng.random_range(0..7u32))
+        .collect::<Vec<_>>();
+
+    let mut group = c.benchmark_group("Polynomial Ring Addition Over Zq");
+
+    // this crate
+    let p_vec = p_coeffs
+        .iter()
+        .cloned()
+        .map(poly_ring_xnp1::zq::ZqU32::<Q>::new)
+        .collect::<Vec<_>>();
+    let q_vec = q_coeffs
+        .iter()
+        .cloned()
+        .map(poly_ring_xnp1::zq::ZqU32::<Q>::new)
+        .collect::<Vec<_>>();
+    let p = poly_ring_xnp1::Polynomial::<_, N>::new(p_vec);
+    let q = poly_ring_xnp1::Polynomial::<_, N>::new(q_vec);
+
+    group.bench_function("poly_ring_xnp1", |b| {
+        b.iter_batched(
+            || (p.clone(), q.clone()),
+            |(p, q)| {
+                let _ = p + q;
+            },
+            criterion::BatchSize::SmallInput,
+        );
+    });
+
+    // crate: abstalg
+    let p_coeffs = p_coeffs.into_iter().map(|x| x as i32).collect::<Vec<_>>();
+    let q_coeffs = q_coeffs.into_iter().map(|x| x as i32).collect::<Vec<_>>();
+
+    let poly_ring = {
+        let field = QuotientField::new(I32, Q as i32);
+        let ring = PolynomialAlgebra::new(field);
+        let moduli = (0..=N)
+            .map(|i| if i == 0 || i == N { 1 } else { 0 })
+            .collect::<Vec<_>>();
+        QuotientRing::new(ring, moduli)
+    };
+
+    group.bench_function("abstalg", |b| {
+        b.iter(|| {
+            let _ = poly_ring.add(&p_coeffs, &q_coeffs);
         })
     });
 }
