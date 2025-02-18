@@ -32,7 +32,7 @@ pub fn bench_polynomial_ring_multiplication(c: &mut Criterion) {
     let mut group = c.benchmark_group("Polynomial Ring Multiplication");
 
     // this crate
-    let p = poly_ring_xnp1::Polynomial::<_, N>::new(p_coeffs.clone());
+    let p = poly_ring_xnp1::Polynomial::<i32, N>::new(p_coeffs.clone());
     let q = poly_ring_xnp1::Polynomial::<_, N>::new(q_coeffs.clone());
 
     group.bench_function("poly_ring_xnp1", |b| {
@@ -75,7 +75,7 @@ pub fn bench_polynomial_ring_addition(c: &mut Criterion) {
     let mut group = c.benchmark_group("Polynomial Ring Addition");
 
     // this crate
-    let p = poly_ring_xnp1::Polynomial::<_, N>::new(p_coeffs.clone());
+    let p = poly_ring_xnp1::Polynomial::<i32, N>::new(p_coeffs.clone());
     let q = poly_ring_xnp1::Polynomial::<_, N>::new(q_coeffs.clone());
 
     group.bench_function("poly_ring_xnp1", |b| {
@@ -124,18 +124,8 @@ fn bench_polynomial_ring_addition_over_zq(c: &mut Criterion) {
     let mut group = c.benchmark_group("Polynomial Ring Addition Over Zq");
 
     // this crate
-    let p_vec = p_coeffs
-        .iter()
-        .cloned()
-        .map(poly_ring_xnp1::zq::ZqU32::<Q>::new)
-        .collect::<Vec<_>>();
-    let q_vec = q_coeffs
-        .iter()
-        .cloned()
-        .map(poly_ring_xnp1::zq::ZqU32::<Q>::new)
-        .collect::<Vec<_>>();
-    let p = poly_ring_xnp1::Polynomial::<_, N>::new(p_vec);
-    let q = poly_ring_xnp1::Polynomial::<_, N>::new(q_vec);
+    let p = poly_ring_xnp1::Polynomial::<poly_ring_xnp1::zq::ZqU32<Q>, N>::new(p_coeffs.clone());
+    let q = poly_ring_xnp1::Polynomial::<_, N>::new(q_coeffs.clone());
 
     group.bench_function("poly_ring_xnp1", |b| {
         b.iter_batched(
@@ -185,18 +175,8 @@ fn bench_polynomial_ring_multiplication_over_zq(c: &mut Criterion) {
     let mut group = c.benchmark_group("Polynomial Ring Multiplication Over Zq");
 
     // this crate
-    let p_vec = p_coeffs
-        .iter()
-        .cloned()
-        .map(poly_ring_xnp1::zq::ZqU32::<Q>::new)
-        .collect::<Vec<_>>();
-    let q_vec = q_coeffs
-        .iter()
-        .cloned()
-        .map(poly_ring_xnp1::zq::ZqU32::<Q>::new)
-        .collect::<Vec<_>>();
-    let p = poly_ring_xnp1::Polynomial::<_, N>::new(p_vec);
-    let q = poly_ring_xnp1::Polynomial::<_, N>::new(q_vec);
+    let p = poly_ring_xnp1::Polynomial::<poly_ring_xnp1::zq::ZqU32<Q>, N>::new(p_coeffs.clone());
+    let q = poly_ring_xnp1::Polynomial::<_, N>::new(q_coeffs.clone());
 
     group.bench_function("poly_ring_xnp1", |b| {
         b.iter_batched(

@@ -27,9 +27,9 @@ impl<T, const N: usize> Polynomial<T, N> {
     ///
     /// ## Safety
     /// The constant N must be a power of two, so that the polynomial is irreducible over Z.
-    pub fn new(coeffs: Vec<T>) -> Self
+    pub fn new<K>(coeffs: Vec<K>) -> Self
     where
-        T: Zero,
+        T: Zero + From<K>,
     {
         assert_eq!(N.count_ones(), 1, "N must be a power of two");
         assert!(
@@ -37,7 +37,7 @@ impl<T, const N: usize> Polynomial<T, N> {
             "The degree of the polynomial must be less than or equal to N"
         );
 
-        let mut coeffs = coeffs;
+        let mut coeffs = coeffs.into_iter().map(T::from).collect();
         trim_zeros(&mut coeffs);
 
         Polynomial { coeffs }
@@ -294,31 +294,28 @@ mod tests {
     #[cfg(feature = "zq")]
     #[test]
     fn test_poly_over_zq() {
-        use crate::{
-            zq::{ZqI32, ZqI64, ZqU32, ZqU64},
-            zqi32_vec, zqi64_vec, zqu32_vec, zqu64_vec,
-        };
+        use crate::zq::{ZqI32, ZqI64, ZqU32, ZqU64};
 
         // p is the polynomial 1 + 2x + 3x^2 where the coefficients are in Z/7Z.
-        let p = Polynomial::<_, 4>::new(zqi32_vec![1,2,3; 7]);
+        let p = Polynomial::<ZqI32<7>, 4>::new(vec![1i32, 2, 3]);
         assert_eq!(p.deg(), 2);
         assert_eq!(p.coefficient(0), ZqI32::new(1));
         assert_eq!(p.coefficient(1), ZqI32::new(2));
         assert_eq!(p.coefficient(2), ZqI32::new(3));
 
-        let p = Polynomial::<_, 4>::new(zqi64_vec![1,2,3; 7]);
+        let p = Polynomial::<ZqI64<7>, 4>::new(vec![1i64, 2, 3]);
         assert_eq!(p.deg(), 2);
         assert_eq!(p.coefficient(0), ZqI64::new(1));
         assert_eq!(p.coefficient(1), ZqI64::new(2));
         assert_eq!(p.coefficient(2), ZqI64::new(3));
 
-        let p = Polynomial::<_, 4>::new(zqu32_vec![1,2,3; 7]);
+        let p = Polynomial::<ZqU32<7>, 4>::new(vec![1u32, 2, 3]);
         assert_eq!(p.deg(), 2);
         assert_eq!(p.coefficient(0), ZqU32::new(1));
         assert_eq!(p.coefficient(1), ZqU32::new(2));
         assert_eq!(p.coefficient(2), ZqU32::new(3));
 
-        let p = Polynomial::<_, 4>::new(zqu64_vec![1,2,3; 7]);
+        let p = Polynomial::<ZqU64<7>, 4>::new(vec![1u64, 2, 3]);
         assert_eq!(p.deg(), 2);
         assert_eq!(p.coefficient(0), ZqU64::new(1));
         assert_eq!(p.coefficient(1), ZqU64::new(2));
