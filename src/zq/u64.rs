@@ -1,6 +1,6 @@
-use std::ops::{Add, Mul, Neg, Sub};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use num::{One, Zero};
+use num::{Integer, One, Zero};
 
 /// A macro to create a vector of `ZqU64`. It transforms the following code:
 ///
@@ -34,7 +34,7 @@ pub struct ZqU64<const Q: u64> {
 }
 
 impl<const Q: u64> ZqU64<Q> {
-    /// Creates a new `Zqu64` from the given value. It normalizes the value to the range \[-Q/2, Q/2\).
+    /// Creates a new `Zqu64` from the given value.
     pub fn new(value: u64) -> Self {
         Self {
             value: value.rem_euclid(Q),
@@ -176,6 +176,45 @@ impl<const Q: u64> Mul for &ZqU64<Q> {
     }
 }
 
+impl<const Q: u64> Div for ZqU64<Q> {
+    type Output = ZqU64<Q>;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        use num::ToPrimitive;
+
+        if rhs.is_zero() {
+            panic!("division by zero");
+        }
+        let x = num::BigInt::from(rhs.value)
+            .extended_gcd(&num::BigInt::from(Q))
+            .x
+            .mod_floor(&num::BigInt::from(Q))
+            .to_u64()
+            .unwrap();
+
+        self.mul(ZqU64::new(x))
+    }
+}
+
+impl<const Q: u64> Div for &ZqU64<Q> {
+    type Output = ZqU64<Q>;
+
+    fn div(self, rhs: &ZqU64<Q>) -> Self::Output {
+        use num::ToPrimitive;
+        if rhs.is_zero() {
+            panic!("division by zero");
+        }
+        let x = num::BigInt::from(rhs.value)
+            .extended_gcd(&num::BigInt::from(Q))
+            .x
+            .mod_floor(&num::BigInt::from(Q))
+            .to_u64()
+            .unwrap();
+
+        self.mul(&ZqU64::new(x))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -212,6 +251,23 @@ mod tests {
     }
 
     #[test]
+    fn test_zqu64_add_sub() {
+        const Q: u64 = 7;
+
+        // check all permutations of [0,1,2,3,4,5,6]
+        for i in 0..=6 {
+            for j in 0..=6 {
+                let a = ZqU64::<Q>::new(i);
+                let b = ZqU64::<Q>::new(j);
+                let c = &a + &b;
+
+                assert_eq!(&c - &a, b.clone());
+                assert_eq!(&c - &b, a.clone());
+            }
+        }
+    }
+
+    #[test]
     fn test_zqu64_mul() {
         const Q: u64 = 7;
 
@@ -234,6 +290,45 @@ mod tests {
         let r = a.clone() * b.clone();
         assert_eq!(r, rp);
         assert!(r.value <= Q - 1);
+    }
+
+    #[test]
+    fn test_zqu64_div() {
+        const Q: u64 = 7;
+
+        // we had 4 * 5 = 20 = 6 mod 7, so 6 / 5 = 4 mod 7
+        let a = ZqU64::<Q>::new(6);
+        let b = ZqU64::<Q>::new(5);
+        let rp = &a / &b;
+        let r = a.clone() / b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 4);
+    }
+
+    #[test]
+    fn test_zqu64_mui_div() {
+        const Q: u64 = 7;
+
+        // check all permutations of [0,1,2,3,4,5,6]
+        for i in 0..=6 {
+            for j in 0..=6 {
+                let a = ZqU64::<Q>::new(i);
+                let b = ZqU64::<Q>::new(j);
+                let c = &a * &b;
+
+                if b.is_zero() {
+                    continue;
+                }
+
+                if a.is_zero() {
+                    assert!(c.is_zero());
+                    continue;
+                }
+
+                assert_eq!(&c / &b, a.clone());
+                assert_eq!(&c / &a, b.clone(),);
+            }
+        }
     }
 
     #[test]

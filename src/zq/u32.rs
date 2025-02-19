@@ -1,6 +1,6 @@
-use std::ops::{Add, Mul, Neg, Sub};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use num::{One, Zero};
+use num::{Integer, One, Zero};
 
 /// A macro to create a vector of `ZqU32`. It transforms the following code:
 ///
@@ -34,7 +34,7 @@ pub struct ZqU32<const Q: u32> {
 }
 
 impl<const Q: u32> ZqU32<Q> {
-    /// Creates a new `Zqu32` from the given value. It normalizes the value to the range \[-Q/2, Q/2\).
+    /// Creates a new `Zqu32` from the given value.
     pub fn new(value: u32) -> Self {
         Self {
             value: value.rem_euclid(Q),
@@ -170,6 +170,45 @@ impl<const Q: u32> Mul for &ZqU32<Q> {
     }
 }
 
+impl<const Q: u32> Div for ZqU32<Q> {
+    type Output = ZqU32<Q>;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        use num::ToPrimitive;
+
+        if rhs.is_zero() {
+            panic!("division by zero");
+        }
+        let x = num::BigInt::from(rhs.value)
+            .extended_gcd(&num::BigInt::from(Q))
+            .x
+            .mod_floor(&num::BigInt::from(Q))
+            .to_u32()
+            .unwrap();
+
+        self.mul(ZqU32::new(x))
+    }
+}
+
+impl<const Q: u32> Div for &ZqU32<Q> {
+    type Output = ZqU32<Q>;
+
+    fn div(self, rhs: &ZqU32<Q>) -> Self::Output {
+        use num::ToPrimitive;
+        if rhs.is_zero() {
+            panic!("division by zero");
+        }
+        let x = num::BigInt::from(rhs.value)
+            .extended_gcd(&num::BigInt::from(Q))
+            .x
+            .mod_floor(&num::BigInt::from(Q))
+            .to_u32()
+            .unwrap();
+
+        self.mul(&ZqU32::new(x))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -206,6 +245,23 @@ mod tests {
     }
 
     #[test]
+    fn test_zqu32_add_sub() {
+        const Q: u32 = 7;
+
+        // check all permutations of [0,1,2,3,4,5,6]
+        for i in 0..=6 {
+            for j in 0..=6 {
+                let a = ZqU32::<Q>::new(i);
+                let b = ZqU32::<Q>::new(j);
+                let c = &a + &b;
+
+                assert_eq!(&c - &a, b.clone());
+                assert_eq!(&c - &b, a.clone());
+            }
+        }
+    }
+
+    #[test]
     fn test_zqu32_mul() {
         const Q: u32 = 7;
 
@@ -231,7 +287,46 @@ mod tests {
     }
 
     #[test]
-    fn test_zqu64_vec() {
+    fn test_zqu32_div() {
+        const Q: u32 = 7;
+
+        // we had 4 * 5 = 20 = 6 mod 7, so 6 / 5 = 4 mod 7
+        let a = ZqU32::<Q>::new(6);
+        let b = ZqU32::<Q>::new(5);
+        let rp = &a / &b;
+        let r = a.clone() / b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 4);
+    }
+
+    #[test]
+    fn test_zqu32_mui_div() {
+        const Q: u32 = 7;
+
+        // check all permutations of [0,1,2,3,4,5,6]
+        for i in 0..=6 {
+            for j in 0..=6 {
+                let a = ZqU32::<Q>::new(i);
+                let b = ZqU32::<Q>::new(j);
+                let c = &a * &b;
+
+                if b.is_zero() {
+                    continue;
+                }
+
+                if a.is_zero() {
+                    assert!(c.is_zero());
+                    continue;
+                }
+
+                assert_eq!(&c / &b, a.clone());
+                assert_eq!(&c / &a, b.clone(),);
+            }
+        }
+    }
+
+    #[test]
+    fn test_zqu32_vec() {
         let v = zqu32_vec![12, 8, 0, 6; 7];
         let values = v.iter().map(|x| x.value).collect::<Vec<_>>();
         assert_eq!(values, vec![5, 1, 0, 6]);

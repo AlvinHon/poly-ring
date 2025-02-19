@@ -1,6 +1,7 @@
-use std::ops::{Add, Mul, Neg, Sub};
+use core::panic;
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use num::{One, Zero};
+use num::{Integer, One, Zero};
 
 /// A macro to create a vector of `ZqI32`. It transforms the following code:
 ///
@@ -164,6 +165,30 @@ impl<const Q: i32> Mul for &ZqI32<Q> {
     }
 }
 
+impl<const Q: i32> Div for ZqI32<Q> {
+    type Output = ZqI32<Q>;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        if rhs.is_zero() {
+            panic!("division by zero");
+        }
+        let x = rhs.value.extended_gcd(&Q).x;
+        self.mul(ZqI32::new(x))
+    }
+}
+
+impl<const Q: i32> Div for &ZqI32<Q> {
+    type Output = ZqI32<Q>;
+
+    fn div(self, rhs: &ZqI32<Q>) -> Self::Output {
+        if rhs.is_zero() {
+            panic!("division by zero");
+        }
+        let x = rhs.value.extended_gcd(&Q).x;
+        self.mul(&ZqI32::new(x))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -204,6 +229,23 @@ mod tests {
     }
 
     #[test]
+    fn test_zqi32_add_sub() {
+        const Q: i32 = 7;
+
+        // check all permutations of [-3,-2,-1,0,1,2,3]
+        for i in -3..=3 {
+            for j in -3..=3 {
+                let a = ZqI32::<Q>::new(i);
+                let b = ZqI32::<Q>::new(j);
+                let c = &a + &b;
+
+                assert_eq!(&c - &a, b.clone());
+                assert_eq!(&c - &b, a.clone());
+            }
+        }
+    }
+
+    #[test]
     fn test_zqi32_mul() {
         const Q: i32 = 7;
 
@@ -227,6 +269,56 @@ mod tests {
         let r = a.clone() * b.clone();
         assert_eq!(r, rp);
         assert!(r.value <= Q / 2);
+    }
+
+    #[test]
+    fn test_zqi32_div() {
+        const Q: i32 = 7;
+
+        // [-3,-2,-1,0,1,2,3] <-> [4,5,6,0,1,2,3]
+        // we had -3 * -2 = 6 = -1 mod 7, so -1 / -2 = -3 mod 7
+        let a = ZqI32::<Q>::new(-1);
+        let b = ZqI32::<Q>::new(-2);
+        let rp = &a / &b;
+        let r = a.clone() / b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, -3);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqi32_div_zero() {
+        const Q: i32 = 7;
+
+        let a = ZqI32::<Q>::one();
+        let b = ZqI32::<Q>::zero();
+        let _ = &a / &b;
+    }
+
+    #[test]
+    fn test_zqi32_mui_div() {
+        const Q: i32 = 7;
+
+        // check all permutations of [-3,-2,-1,0,1,2,3]
+        for i in -3..=3 {
+            for j in -3..=3 {
+                let a = ZqI32::<Q>::new(i);
+                let b = ZqI32::<Q>::new(j);
+                let c = &a * &b;
+
+                if b.is_zero() {
+                    continue;
+                }
+
+                if a.is_zero() {
+                    assert!(c.is_zero());
+                    continue;
+                }
+
+                assert_eq!(&c / &b, a.clone());
+                assert_eq!(&c / &a, b.clone(),);
+            }
+        }
     }
 
     #[test]
