@@ -1,7 +1,7 @@
 use core::panic;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use num::{Integer, One, Zero};
+use num::{traits::Inv, Integer, One, Zero};
 
 /// A macro to create a vector of `ZqI32`. It transforms the following code:
 ///
@@ -189,6 +189,30 @@ impl<const Q: i32> Div for &ZqI32<Q> {
     }
 }
 
+impl<const Q: i32> Inv for ZqI32<Q> {
+    type Output = Self;
+
+    fn inv(self) -> Self::Output {
+        if self.is_zero() {
+            panic!("division by zero");
+        }
+        let x = self.value.extended_gcd(&Q).x;
+        ZqI32::new(x)
+    }
+}
+
+impl<const Q: i32> Inv for &ZqI32<Q> {
+    type Output = ZqI32<Q>;
+
+    fn inv(self) -> Self::Output {
+        if self.is_zero() {
+            panic!("division by zero");
+        }
+        let x = self.value.extended_gcd(&Q).x;
+        ZqI32::new(x)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -293,6 +317,19 @@ mod tests {
         let a = ZqI32::<Q>::one();
         let b = ZqI32::<Q>::zero();
         let _ = &a / &b;
+    }
+
+    #[test]
+    fn test_zqi32_inv() {
+        const Q: i32 = 7;
+
+        // [-3,-2,-1,0,1,2,3] <-> [4,5,6,0,1,2,3]
+        // 2 * -3 = -6 = 1 mod 7, so 2^-1 = -3 mod 7
+        let a = ZqI32::<Q>::new(2);
+        let rp = (&a).inv();
+        let r = a.clone().inv();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, -3);
     }
 
     #[test]

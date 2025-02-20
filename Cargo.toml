@@ -15,7 +15,7 @@ path = "src/lib.rs"
 
 
 [features]
-default = []
+default = ["zq"]
 zq = []
 
 [dependencies]

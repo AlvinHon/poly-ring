@@ -1,6 +1,6 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use num::{Integer, One, Zero};
+use num::{traits::Inv, Integer, One, ToPrimitive, Zero};
 
 /// A macro to create a vector of `ZqU64`. It transforms the following code:
 ///
@@ -180,8 +180,6 @@ impl<const Q: u64> Div for ZqU64<Q> {
     type Output = ZqU64<Q>;
 
     fn div(self, rhs: Self) -> Self::Output {
-        use num::ToPrimitive;
-
         if rhs.is_zero() {
             panic!("division by zero");
         }
@@ -200,7 +198,6 @@ impl<const Q: u64> Div for &ZqU64<Q> {
     type Output = ZqU64<Q>;
 
     fn div(self, rhs: &ZqU64<Q>) -> Self::Output {
-        use num::ToPrimitive;
         if rhs.is_zero() {
             panic!("division by zero");
         }
@@ -212,6 +209,40 @@ impl<const Q: u64> Div for &ZqU64<Q> {
             .unwrap();
 
         self.mul(&ZqU64::new(x))
+    }
+}
+
+impl<const Q: u64> Inv for ZqU64<Q> {
+    type Output = Self;
+
+    fn inv(self) -> Self::Output {
+        if self.is_zero() {
+            panic!("division by zero");
+        }
+        let x = num::BigInt::from(self.value)
+            .extended_gcd(&num::BigInt::from(Q))
+            .x
+            .mod_floor(&num::BigInt::from(Q))
+            .to_u64()
+            .unwrap();
+        ZqU64::new(x)
+    }
+}
+
+impl<const Q: u64> Inv for &ZqU64<Q> {
+    type Output = ZqU64<Q>;
+
+    fn inv(self) -> Self::Output {
+        if self.is_zero() {
+            panic!("division by zero");
+        }
+        let x = num::BigInt::from(self.value)
+            .extended_gcd(&num::BigInt::from(Q))
+            .x
+            .mod_floor(&num::BigInt::from(Q))
+            .to_u64()
+            .unwrap();
+        ZqU64::new(x)
     }
 }
 
@@ -301,6 +332,28 @@ mod tests {
         let b = ZqU64::<Q>::new(5);
         let rp = &a / &b;
         let r = a.clone() / b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 4);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqu64_div_zero() {
+        const Q: u64 = 7;
+
+        let a = ZqU64::<Q>::one();
+        let b = ZqU64::<Q>::zero();
+        let _ = &a / &b;
+    }
+
+    #[test]
+    fn test_zqu64_inv() {
+        const Q: u64 = 7;
+
+        // 2 * 4 = 8 = 1 mod 7, so 2^-1 = 4 mod 7
+        let a = ZqU64::<Q>::new(2);
+        let rp = (&a).inv();
+        let r = a.clone().inv();
         assert_eq!(r, rp);
         assert_eq!(r.value, 4);
     }

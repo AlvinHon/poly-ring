@@ -1,6 +1,6 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use num::{Integer, One, Zero};
+use num::{traits::Inv, Integer, One, ToPrimitive, Zero};
 
 /// A macro to create a vector of `ZqU32`. It transforms the following code:
 ///
@@ -174,8 +174,6 @@ impl<const Q: u32> Div for ZqU32<Q> {
     type Output = ZqU32<Q>;
 
     fn div(self, rhs: Self) -> Self::Output {
-        use num::ToPrimitive;
-
         if rhs.is_zero() {
             panic!("division by zero");
         }
@@ -194,7 +192,6 @@ impl<const Q: u32> Div for &ZqU32<Q> {
     type Output = ZqU32<Q>;
 
     fn div(self, rhs: &ZqU32<Q>) -> Self::Output {
-        use num::ToPrimitive;
         if rhs.is_zero() {
             panic!("division by zero");
         }
@@ -206,6 +203,40 @@ impl<const Q: u32> Div for &ZqU32<Q> {
             .unwrap();
 
         self.mul(&ZqU32::new(x))
+    }
+}
+
+impl<const Q: u32> Inv for ZqU32<Q> {
+    type Output = Self;
+
+    fn inv(self) -> Self::Output {
+        if self.is_zero() {
+            panic!("division by zero");
+        }
+        let x = num::BigInt::from(self.value)
+            .extended_gcd(&num::BigInt::from(Q))
+            .x
+            .mod_floor(&num::BigInt::from(Q))
+            .to_u32()
+            .unwrap();
+        ZqU32::new(x)
+    }
+}
+
+impl<const Q: u32> Inv for &ZqU32<Q> {
+    type Output = ZqU32<Q>;
+
+    fn inv(self) -> Self::Output {
+        if self.is_zero() {
+            panic!("division by zero");
+        }
+        let x = num::BigInt::from(self.value)
+            .extended_gcd(&num::BigInt::from(Q))
+            .x
+            .mod_floor(&num::BigInt::from(Q))
+            .to_u32()
+            .unwrap();
+        ZqU32::new(x)
     }
 }
 
@@ -295,6 +326,28 @@ mod tests {
         let b = ZqU32::<Q>::new(5);
         let rp = &a / &b;
         let r = a.clone() / b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 4);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqu32_div_zero() {
+        const Q: u32 = 7;
+
+        let a = ZqU32::<Q>::one();
+        let b = ZqU32::<Q>::zero();
+        let _ = &a / &b;
+    }
+
+    #[test]
+    fn test_zqu32_inv() {
+        const Q: u32 = 7;
+
+        // 2 * 4 = 8 = 1 mod 7, so 2^-1 = 4 mod 7
+        let a = ZqU32::<Q>::new(2);
+        let rp = (&a).inv();
+        let r = a.clone().inv();
         assert_eq!(r, rp);
         assert_eq!(r.value, 4);
     }
