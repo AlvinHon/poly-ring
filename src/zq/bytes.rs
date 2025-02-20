@@ -4,9 +4,9 @@ use super::{ZqI32, ZqI64, ZqU32, ZqU64};
 
 // Apply same implementation as num_traits::ops::bytes
 macro_rules! impl_to_from_bytes {
-    ($T:ty, $Z:ty, $L:expr) => {
+    ($T:ty, $Z:ty, $L:ty) => {
         impl<const Q: $T> ToBytes for $Z {
-            type Bytes = [u8; $L];
+            type Bytes = $L;
 
             #[inline]
             fn to_be_bytes(&self) -> Self::Bytes {
@@ -25,7 +25,7 @@ macro_rules! impl_to_from_bytes {
         }
 
         impl<const Q: $T> FromBytes for $Z {
-            type Bytes = [u8; $L];
+            type Bytes = $L;
 
             #[inline]
             fn from_be_bytes(bytes: &Self::Bytes) -> Self {
@@ -45,7 +45,7 @@ macro_rules! impl_to_from_bytes {
     };
 }
 
-impl_to_from_bytes!(i32, ZqI32<Q>, 4);
-impl_to_from_bytes!(u32, ZqU32<Q>, 4);
-impl_to_from_bytes!(i64, ZqI64<Q>, 8);
-impl_to_from_bytes!(u64, ZqU64<Q>, 8);
+impl_to_from_bytes!(i32, ZqI32<Q>, <i32 as ToBytes>::Bytes);
+impl_to_from_bytes!(u32, ZqU32<Q>, <u32 as ToBytes>::Bytes);
+impl_to_from_bytes!(i64, ZqI64<Q>, <i64 as ToBytes>::Bytes);
+impl_to_from_bytes!(u64, ZqU64<Q>, <u64 as ToBytes>::Bytes);
