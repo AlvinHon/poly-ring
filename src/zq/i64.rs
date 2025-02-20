@@ -30,7 +30,7 @@ macro_rules! zqi64_vec {
 /// its implementation makes this assumption for achieving some important properties of ring Z/QZ.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ZqI64<const Q: i64> {
-    value: i64,
+    pub(crate) value: i64,
 }
 
 impl<const Q: i64> ZqI64<Q> {

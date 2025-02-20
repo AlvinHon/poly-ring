@@ -31,7 +31,7 @@ macro_rules! zqi32_vec {
 /// its implementation makes this assumption for achieving some important properties of ring Z/QZ.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ZqI32<const Q: i32> {
-    value: i32,
+    pub(crate) value: i32,
 }
 
 impl<const Q: i32> ZqI32<Q> {
