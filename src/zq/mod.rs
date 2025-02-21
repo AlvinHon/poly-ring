@@ -1,4 +1,5 @@
 pub mod bytes;
+pub mod cast;
 pub mod inv;
 pub mod macros;
 pub mod ops;
