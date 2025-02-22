@@ -17,9 +17,11 @@ path = "src/lib.rs"
 [features]
 default = []
 zq = []
+rand = ["dep:rand"]
 
 [dependencies]
 num = "0.4"
+rand = {version = "0.9", optional=true}
 
 [dev-dependencies]
 abstalg = "0.2.0"
