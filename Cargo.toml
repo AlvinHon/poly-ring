@@ -6,7 +6,7 @@ edition = "2021"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/AlvinHon/poly-ring"
-description = "Library for arithmetics in Polynomial ring Z[x]/(x^n+1) for lattice-based cryptography"
+description = "Polynomial ring Z[x]/(x^n+1) for lattice-based cryptography"
 
 
 [lib]

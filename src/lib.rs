@@ -7,3 +7,6 @@ pub use polynomial::Polynomial;
 
 #[cfg(feature = "zq")]
 pub mod zq;
+
+#[cfg(feature = "rand")]
+pub mod rand;
