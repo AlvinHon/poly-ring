@@ -81,7 +81,7 @@ pub struct ZqU32<const Q: u32> {
 }
 
 impl<const Q: u32> ZqU32<Q> {
-    /// Creates a new `Zqu32` from the given value.
+    /// Creates a new `ZqU32` from the given value.
     pub fn new(value: u32) -> Self {
         Self {
             value: value.rem_euclid(Q),
@@ -107,7 +107,7 @@ pub struct ZqU64<const Q: u64> {
 }
 
 impl<const Q: u64> ZqU64<Q> {
-    /// Creates a new `Zqu64` from the given value.
+    /// Creates a new `ZqU64` from the given value.
     pub fn new(value: u64) -> Self {
         Self {
             value: value.rem_euclid(Q),

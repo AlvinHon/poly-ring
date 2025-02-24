@@ -1,8 +1,11 @@
-use rand::distr::uniform::{SampleUniform, UniformInt, UniformSampler};
+use rand::distr::{
+    uniform::{SampleUniform, UniformInt, UniformSampler},
+    Distribution, StandardUniform,
+};
 
 use super::{ZqI32, ZqI64, ZqU32, ZqU64};
 
-macro_rules! sampler_structs_impl_uniformsampler {
+macro_rules! sampler_structs_uniform_impls {
     ($S:tt, $T:ty, $Z:tt) => {
         pub struct $S<const Q: $T>(UniformInt<$T>);
 
@@ -33,13 +36,19 @@ macro_rules! sampler_structs_impl_uniformsampler {
         impl<const Q: $T> SampleUniform for $Z<Q> {
             type Sampler = $S<Q>;
         }
+
+        impl<const Q: $T> Distribution<$Z<Q>> for StandardUniform {
+            fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> $Z<Q> {
+                $Z::<Q>::new(self.sample(rng))
+            }
+        }
     };
 }
 
-sampler_structs_impl_uniformsampler!(ZqI32Sampler, i32, ZqI32);
-sampler_structs_impl_uniformsampler!(ZqI64Sampler, i64, ZqI64);
-sampler_structs_impl_uniformsampler!(ZqU32Sampler, u32, ZqU32);
-sampler_structs_impl_uniformsampler!(ZqU64Sampler, u64, ZqU64);
+sampler_structs_uniform_impls!(ZqI32Sampler, i32, ZqI32);
+sampler_structs_uniform_impls!(ZqI64Sampler, i64, ZqI64);
+sampler_structs_uniform_impls!(ZqU32Sampler, u32, ZqU32);
+sampler_structs_uniform_impls!(ZqU64Sampler, u64, ZqU64);
 
 #[cfg(test)]
 mod tests {
