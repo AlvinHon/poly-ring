@@ -1,9 +1,8 @@
+use std::ops::RangeInclusive;
+
 use num::{One, Zero};
 use poly_ring_xnp1::Polynomial;
-use rand::{
-    distr::uniform::{SampleRange, SampleUniform},
-    rng, Rng,
-};
+use rand::{distr::uniform::SampleUniform, rng, Rng};
 
 const N: usize = 512; // power of two
 
@@ -11,9 +10,9 @@ const N: usize = 512; // power of two
 fn test_abelian_group_under_addition() {
     let rng = &mut rng();
     for _ in 0..100 {
-        let a = rand_polynomial::<N, _, _, _>(rng, -100..100);
-        let b = rand_polynomial::<N, _, _, _>(rng, -100..100);
-        let c = rand_polynomial::<N, _, _, _>(rng, -100..100);
+        let a = test_random_polynomial::<i32>(rng, -100..=100);
+        let b = test_random_polynomial::<i32>(rng, -100..=100);
+        let c = test_random_polynomial::<i32>(rng, -100..=100);
 
         // additive associativity
         let lhs = (a.clone() + b.clone()) + c.clone();
@@ -39,9 +38,9 @@ fn test_abelian_group_under_addition() {
 fn test_monoid_under_multiplication() {
     let rng = &mut rng();
     for _ in 0..100 {
-        let a = rand_polynomial::<N, _, _, _>(rng, -100..100);
-        let b = rand_polynomial::<N, _, _, _>(rng, -100..100);
-        let c = rand_polynomial::<N, _, _, _>(rng, -100..100);
+        let a = test_random_polynomial::<i32>(rng, -100..=100);
+        let b = test_random_polynomial::<i32>(rng, -100..=100);
+        let c = test_random_polynomial::<i32>(rng, -100..=100);
 
         // multiplicative associativity
         let lhs = (a.clone() * b.clone()) * c.clone();
@@ -59,9 +58,9 @@ fn test_monoid_under_multiplication() {
 fn test_multiplication_distributive_wrt_addition() {
     let rng = &mut rng();
     for _ in 0..100 {
-        let a = rand_polynomial::<N, _, _, _>(rng, -100..100);
-        let b = rand_polynomial::<N, _, _, _>(rng, -100..100);
-        let c = rand_polynomial::<N, _, _, _>(rng, -100..100);
+        let a = test_random_polynomial::<i32>(rng, -100..=100);
+        let b = test_random_polynomial::<i32>(rng, -100..=100);
+        let c = test_random_polynomial::<i32>(rng, -100..=100);
 
         // left distributivity
         let lhs = a.clone() * (b.clone() + c.clone());
@@ -74,16 +73,24 @@ fn test_multiplication_distributive_wrt_addition() {
     }
 }
 
-fn rand_polynomial<const N: usize, T, R, G>(rng: &mut R, range: G) -> Polynomial<T, N>
+fn test_random_polynomial<T>(rng: &mut impl Rng, range: RangeInclusive<T>) -> Polynomial<T, N>
 where
-    T: SampleUniform + Zero,
-    R: Rng,
-    G: SampleRange<T> + Clone,
+    T: Zero + Clone + PartialOrd + Ord + SampleUniform,
 {
-    let coeff_size = rng.random_range(1..N);
-    Polynomial::new(
-        (0..coeff_size)
-            .map(|_| rng.random_range(range.clone()))
-            .collect(),
-    )
+    #[cfg(feature = "rand")]
+    {
+        use poly_ring_xnp1::rand::CoeffsRangeInclusive;
+        let range = CoeffsRangeInclusive::from(range);
+        return rng.random_range(range);
+    }
+
+    #[cfg(not(feature = "rand"))]
+    {
+        let coeff_size = rng.random_range(1..N);
+        return Polynomial::new(
+            (0..coeff_size)
+                .map(|_| rng.random_range(range.clone()))
+                .collect(),
+        );
+    }
 }

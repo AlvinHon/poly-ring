@@ -103,6 +103,7 @@ where
 /// let p: Polynomial<i32, 4> = rng.random_range(r);
 /// p.iter().for_each(|c| assert!(-2 <= *c && *c < 3));
 /// ```
+#[derive(Clone, Debug)]
 pub struct CoeffsRange<T> {
     range: Range<T>,
 }
@@ -128,6 +129,7 @@ impl<T> From<Range<T>> for CoeffsRange<T> {
 /// let p: Polynomial<i32, 4> = rng.random_range(r);
 /// p.iter().for_each(|c| assert!(-3 <= *c && *c <= 3));
 /// ```
+#[derive(Clone, Debug)]
 pub struct CoeffsRangeInclusive<T> {
     range: RangeInclusive<T>,
 }
