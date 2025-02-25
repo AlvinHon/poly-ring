@@ -1,5 +1,11 @@
-# Polynomial Ring Z\[X\]/(X^n + 1)
+[![version]][crates.io] [![workflow status]][workflow]
 
+[version]: https://img.shields.io/crates/v/poly-ring-xnp1.svg
+[crates.io]: https://crates.io/crates/poly-ring-xnp1
+[workflow status]: https://github.com/AlvinHon/poly-ring/actions/workflows/build_and_test.yml/badge.svg?branch=main
+[workflow]: https://github.com/AlvinHon/poly-ring/actions/workflows/build_and_test.yml
+
+# Polynomial Ring Z\[X\]/(X^n + 1)
 
 ```math
 Z[X]/(X^n + 1)
