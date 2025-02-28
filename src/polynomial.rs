@@ -273,6 +273,34 @@ where
     }
 }
 
+// ... impl serde::(De)Serialize for Polynomial<T> ...
+#[cfg(feature = "serde")]
+impl<T, const N: usize> serde::Serialize for Polynomial<T, N>
+where
+    T: serde::Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.coeffs.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T, const N: usize> serde::Deserialize<'de> for Polynomial<T, N>
+where
+    T: serde::Deserialize<'de> + Zero,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Polynomial<T, N>, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let coeffs = Vec::<T>::deserialize(deserializer)?;
+        Ok(Polynomial::new(coeffs))
+    }
+}
+
 #[cfg(test)]
 mod tests {
 

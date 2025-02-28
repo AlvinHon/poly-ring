@@ -5,6 +5,8 @@ pub mod macros;
 pub mod ops;
 #[cfg(feature = "rand")]
 pub mod rand;
+#[cfg(feature = "serde")]
+pub mod serde;
 
 /// A type representing an element of the ring Z/QZ. The value is normalized to the range \[-Q/2, Q/2\).
 ///

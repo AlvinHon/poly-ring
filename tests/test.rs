@@ -73,6 +73,49 @@ fn test_multiplication_distributive_wrt_addition() {
     }
 }
 
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde() {
+    let p = Polynomial::<i32, 4>::new(vec![1, 2, 3, 4]);
+    let serialized_p = bincode::serialize(&p).unwrap();
+    // - 8 bytes for length of the coefficients in bincode
+    // - 4 bytes for each i32 coefficient
+    // => 8 + 4 * 4 = 24
+    assert_eq!(serialized_p.len(), 24);
+
+    let deserialized_p = bincode::deserialize(&serialized_p).unwrap();
+    assert_eq!(p, deserialized_p);
+
+    let p = Polynomial::<i64, 4>::new(vec![1, 2, 3, 4]);
+    let serialized_p = bincode::serialize(&p).unwrap();
+    // - 8 bytes for length of the coefficients in bincode
+    // - 8 bytes for each i64 coefficient
+    // => 8 + 8 * 4 = 40
+    assert_eq!(serialized_p.len(), 40);
+
+    let deserialized_p = bincode::deserialize(&serialized_p).unwrap();
+    assert_eq!(p, deserialized_p);
+}
+
+#[cfg(all(feature = "zq", feature = "serde"))]
+#[test]
+fn test_serde_over_zq() {
+    use poly_ring_xnp1::zq::{ZqI32, ZqI64};
+    let p = Polynomial::<ZqI32<7>, 4>::new(vec![-1, -2, 1, 2]);
+    let serialized_p = bincode::serialize(&p).unwrap();
+    // - 8 bytes for length of the coefficients in bincode
+    // - 4 bytes for each ZqI32 coefficient (it only contains a i32 value)
+    // => 8 + 4 * 4 = 24
+    assert_eq!(serialized_p.len(), 24);
+
+    let p = Polynomial::<ZqI64<7>, 4>::new(vec![-1, -2, 1, 2]);
+    let serialized_p = bincode::serialize(&p).unwrap();
+    // - 8 bytes for length of the coefficients in bincode
+    // - 8 bytes for each ZqI64 coefficient (it only contains a i64 value)
+    // => 8 + 8 * 4 = 40
+    assert_eq!(serialized_p.len(), 40);
+}
+
 fn test_random_polynomial<T>(rng: &mut impl Rng, range: RangeInclusive<T>) -> Polynomial<T, N>
 where
     T: Zero + Clone + PartialOrd + Ord + SampleUniform,
