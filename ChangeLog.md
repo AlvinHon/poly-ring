@@ -1,4 +1,4 @@
-### 0.3.0 (25-Feb-2025)
+### 0.3.0 (28-Feb-2025)
 - Add feature `serde` for serialization and deserialization of `Polynomial`.
 
 ### 0.2.0 (25-Feb-2025)
