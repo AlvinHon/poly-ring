@@ -198,9 +198,9 @@ mod tests {
 
         // (x^n + 1)-cyclic lattice is an ideal in Z[x]/(x^n + 1)
         // (v_{0} + ... v_{n-2} x^{n-2} + v_{n-1} x^{n-1}) x = -v_{n-1} + v_{0} x + ... + v_{n-2} x^{n-1}
-        assert!(a.coeffs[N - 1] == -&rhs.coeffs[0]);
+        assert!(a.coefficient(N - 1) == -&rhs.coefficient(0));
         for i in 0..N - 1 {
-            assert!(a.coeffs[i] == rhs.coeffs[i + 1]);
+            assert!(a.coefficient(i) == rhs.coefficient(i + 1));
         }
     }
 }
