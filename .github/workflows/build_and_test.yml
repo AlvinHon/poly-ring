@@ -20,6 +20,11 @@ jobs:
       with:
         toolchain: stable
         override: true
+    - uses: actions-rs/install@v0.1
+      with:
+        crate: cargo-tarpaulin
+        version: latest
+        use-tool-cache: true
         
     - name: Build
       run: cargo build --verbose
@@ -27,15 +32,11 @@ jobs:
     - name: Run tests
       run: cargo test --all-features --verbose
     
-    # TODO Fix the cargo-tarpaulin error
-    # - name: Run cargo-tarpaulin
-    #   uses: actions-rs/tarpaulin@v0.1
-    #   with:
-    #     version: 'latest'
-    #     args: '-- --test-threads 1'
+    - name: Run cargo-tarpaulin
+      run: cargo tarpaulin --all-features --verbose -- --test-threads 1
               
-    # - name: Upload coverage reports to Codecov
-    #   uses: codecov/codecov-action@v5
-    #   with:
-    #     token: ${{ secrets.CODECOV_TOKEN }}
-    #     slug: AlvinHon/poly-ring
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: AlvinHon/poly-ring
