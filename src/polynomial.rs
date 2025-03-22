@@ -308,9 +308,22 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_new() {
+    fn test_new_invalid_n() {
         const INVALID_N: usize = 5;
         Polynomial::<i32, INVALID_N>::new(vec![1, 2, 3]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_new_invalid_coeffs() {
+        Polynomial::<i32, 4>::new(vec![1, 2, 3, 4, 5, 6, 7, 8]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_from_coeffs_invalid_n() {
+        const INVALID_N: usize = 5;
+        Polynomial::<i32, INVALID_N>::from_coeffs(vec![1, 2, 3]);
     }
 
     #[test]
