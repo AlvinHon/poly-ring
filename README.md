@@ -1,9 +1,11 @@
-[![version]][crates.io] [![workflow status]][workflow]
+[![version]][crates.io] [![workflow status]][workflow] [![codecov status]][codecov]
 
 [version]: https://img.shields.io/crates/v/poly-ring-xnp1.svg
 [crates.io]: https://crates.io/crates/poly-ring-xnp1
 [workflow status]: https://github.com/AlvinHon/poly-ring/actions/workflows/build_and_test.yml/badge.svg?branch=main
 [workflow]: https://github.com/AlvinHon/poly-ring/actions/workflows/build_and_test.yml
+[codecov status]: https://codecov.io/gh/AlvinHon/poly-ring/graph/badge.svg?token=6TI83EGP30
+[codecov]: https://codecov.io/gh/AlvinHon/poly-ring
 
 # Polynomial Ring Z\[X\]/(X^n + 1)
 
