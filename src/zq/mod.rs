@@ -123,3 +123,50 @@ impl<const Q: u64> ZqU64<Q> {
         }
     }
 }
+
+macro_rules! impl_change_moduus {
+    ($T:ty,  $Z:tt) => {
+        impl<const Q: $T> $Z<Q> {
+            pub fn change_modulus<const Q2: $T>(&self) -> $Z<Q2> {
+                $Z::<Q2>::new(self.value)
+            }
+        }
+    };
+}
+
+impl_change_moduus!(i32, ZqI32);
+impl_change_moduus!(i64, ZqI64);
+impl_change_moduus!(u32, ZqU32);
+impl_change_moduus!(u64, ZqU64);
+
+#[cfg(test)]
+mod change_modulus_tests {
+    use super::*;
+
+    #[test]
+    fn test_change_modulus() {
+        let zq = ZqI32::<7>::new(3);
+        assert_eq!(zq.change_modulus::<5>(), ZqI32::<5>::new(3));
+
+        let zq = ZqI32::<7>::new(-3);
+        assert_eq!(zq.change_modulus::<5>(), ZqI32::<5>::new(2));
+
+        let zq = ZqI64::<7>::new(3);
+        assert_eq!(zq.change_modulus::<5>(), ZqI64::<5>::new(3));
+
+        let zq = ZqI64::<7>::new(-3);
+        assert_eq!(zq.change_modulus::<5>(), ZqI64::<5>::new(2));
+
+        let zq = ZqU32::<7>::new(3);
+        assert_eq!(zq.change_modulus::<5>(), ZqU32::<5>::new(3));
+
+        let zq = ZqU32::<7>::new(10);
+        assert_eq!(zq.change_modulus::<5>(), ZqU32::<5>::new(3));
+
+        let zq = ZqU64::<7>::new(3);
+        assert_eq!(zq.change_modulus::<5>(), ZqU64::<5>::new(3));
+
+        let zq = ZqU64::<7>::new(10);
+        assert_eq!(zq.change_modulus::<5>(), ZqU64::<5>::new(3));
+    }
+}
