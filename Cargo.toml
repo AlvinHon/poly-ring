@@ -1,6 +1,6 @@
 [package]
 name = "poly-ring-xnp1"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["AlvinHon <alvin.cpp@gmail.com>"]
 edition = "2021"
 license = "MIT"

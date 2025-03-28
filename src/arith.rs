@@ -188,6 +188,14 @@ mod tests {
     }
 
     #[test]
+    fn test_modulo() {
+        // case: degree of modulus is greater or equal to the degree of polynomial
+        let r = Polynomial::<i32, 4>::from_coeffs(vec![1, 2, 3, 4, 5]);
+        // (1 + 2x + 3x^2 + 4x^3 + 5x^4) mod (x^4 + 1) = -4 + 2x + 3x^2 + 4x^3
+        assert_eq!(r.coeffs, vec![-4, 2, 3, 4]);
+    }
+
+    #[test]
     fn test_cyclic_mul() {
         let rng = &mut rand::rng();
         let a =

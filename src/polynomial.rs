@@ -330,6 +330,19 @@ mod tests {
     fn test_zero() {
         let p = Polynomial::<i32, 4>::zero();
         assert!(p.is_zero());
+        assert!(p.leading_coefficient().is_zero());
+
+        let q = Polynomial::<i32, 4>::new(vec![1, 2, 3]);
+        assert_eq!(p.clone() * q.clone(), Polynomial::zero());
+        assert_eq!(q.clone() * p.clone(), Polynomial::zero());
+    }
+
+    #[test]
+    fn test_sub() {
+        let p1 = Polynomial::<i32, 4>::new(vec![1, 2, 3]);
+        let p2 = Polynomial::new(vec![4, 5]);
+        let r = p1.clone() - p2.clone();
+        assert_eq!(r.coeffs, vec![-3, -3, 3]);
     }
 
     #[cfg(feature = "zq")]
