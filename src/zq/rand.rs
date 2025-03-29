@@ -3,7 +3,7 @@ use rand::distr::{
     Distribution, StandardUniform,
 };
 
-use super::{ZqI32, ZqI64, ZqU32, ZqU64};
+use super::{ZqI128, ZqI32, ZqI64, ZqU32, ZqU64};
 
 macro_rules! sampler_structs_uniform_impls {
     ($S:tt, $T:ty, $Z:tt) => {
@@ -47,6 +47,7 @@ macro_rules! sampler_structs_uniform_impls {
 
 sampler_structs_uniform_impls!(ZqI32Sampler, i32, ZqI32);
 sampler_structs_uniform_impls!(ZqI64Sampler, i64, ZqI64);
+sampler_structs_uniform_impls!(ZqI128Sampler, i128, ZqI128);
 sampler_structs_uniform_impls!(ZqU32Sampler, u32, ZqU32);
 sampler_structs_uniform_impls!(ZqU64Sampler, u64, ZqU64);
 
@@ -72,6 +73,17 @@ mod tests {
         let rng = &mut rand::rng();
         let start = ZqI64::<7>::new(-2);
         let end = ZqI64::<7>::new(2);
+        let range = start.clone()..=end.clone();
+        let x = rng.random_range(range);
+        assert!(x >= start);
+        assert!(x <= end);
+    }
+
+    #[test]
+    fn test_zqi128_sampler() {
+        let rng = &mut rand::rng();
+        let start = ZqI128::<7>::new(-2);
+        let end = ZqI128::<7>::new(2);
         let range = start.clone()..=end.clone();
         let x = rng.random_range(range);
         assert!(x >= start);

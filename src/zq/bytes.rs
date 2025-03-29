@@ -1,6 +1,6 @@
 use num::traits::{FromBytes, ToBytes};
 
-use super::{ZqI32, ZqI64, ZqU32, ZqU64};
+use super::{ZqI128, ZqI32, ZqI64, ZqU32, ZqU64};
 
 // Apply same implementation as num_traits::ops::bytes
 macro_rules! impl_to_from_bytes {
@@ -49,6 +49,7 @@ impl_to_from_bytes!(i32, ZqI32, <i32 as ToBytes>::Bytes);
 impl_to_from_bytes!(u32, ZqU32, <u32 as ToBytes>::Bytes);
 impl_to_from_bytes!(i64, ZqI64, <i64 as ToBytes>::Bytes);
 impl_to_from_bytes!(u64, ZqU64, <u64 as ToBytes>::Bytes);
+impl_to_from_bytes!(i128, ZqI128, <i128 as ToBytes>::Bytes);
 
 #[cfg(test)]
 mod test {
@@ -73,6 +74,25 @@ mod test {
 
         let zq_be = ZqI64::<7>::from_be_bytes(&[255, 255, 255, 255, 255, 255, 255, 253]);
         let zq_le = ZqI64::<7>::from_le_bytes(&[253, 255, 255, 255, 255, 255, 255, 255]);
+        assert_eq!(zq, zq_be);
+        assert_eq!(zq, zq_le);
+
+        let zq = ZqI128::<7>::new(-3);
+        assert_eq!(
+            zq.to_be_bytes(),
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 253,]
+        );
+        assert_eq!(
+            zq.to_le_bytes(),
+            [253, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,]
+        );
+
+        let zq_be = ZqI128::<7>::from_be_bytes(&[
+            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 253,
+        ]);
+        let zq_le = ZqI128::<7>::from_le_bytes(&[
+            253, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        ]);
         assert_eq!(zq, zq_be);
         assert_eq!(zq, zq_le);
 

@@ -1,3 +1,5 @@
+use num::{BigInt, Zero};
+
 pub mod bytes;
 pub mod cast;
 pub mod inv;
@@ -68,6 +70,58 @@ impl<const Q: i64> ZqI64<Q> {
             Self { value: a - Q }
         } else {
             Self { value: a }
+        }
+    }
+}
+
+/// A type representing an element of the ring Z/QZ. The value is normalized to the range \[-Q/2, Q/2\).
+///
+/// ## Safety
+/// Q should be an odd prime number. Although the primality of Q is not checked in the implementation,
+/// its implementation makes this assumption for achieving some important properties of ring Z/QZ.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ZqI128<const Q: i128> {
+    pub(crate) value: i128,
+}
+
+impl<const Q: i128> ZqI128<Q> {
+    /// Creates a new `ZqI128` from the given value. It normalizes the value to the range \[-Q/2, Q/2\).
+    pub fn new(value: i128) -> Self {
+        let a = value.rem_euclid(Q);
+        if a > Q / 2 {
+            Self { value: a - Q }
+        } else {
+            Self { value: a }
+        }
+    }
+
+    fn safe_new(value: num::BigInt) -> Self {
+        use num::ToPrimitive;
+        let q = num::BigInt::from(Q);
+
+        // compute rem_euclid
+        let a = {
+            let mut r = value % q.clone();
+
+            if r < BigInt::zero() {
+                if q.clone() < BigInt::zero() {
+                    r -= q.clone();
+                } else {
+                    r += q.clone();
+                }
+            }
+
+            r
+        };
+
+        if a > q.clone() / 2 {
+            Self {
+                value: (a - q).to_i128().unwrap(),
+            }
+        } else {
+            Self {
+                value: a.to_i128().unwrap(),
+            }
         }
     }
 }

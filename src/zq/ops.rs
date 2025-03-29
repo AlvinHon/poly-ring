@@ -2,7 +2,7 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use num::{BigInt, Integer, One, Zero};
 
-use super::{ZqI32, ZqI64, ZqU32, ZqU64};
+use super::{ZqI128, ZqI32, ZqI64, ZqU32, ZqU64};
 
 // ... Impl From ...
 
@@ -26,6 +26,7 @@ impl_from!(i32, ZqI32);
 impl_from!(i64, ZqI64);
 impl_from!(u32, ZqU32);
 impl_from!(u64, ZqU64);
+impl_from!(i128, ZqI128);
 
 impl<const Q: i64> From<i32> for ZqI64<Q> {
     fn from(value: i32) -> Self {
@@ -66,6 +67,7 @@ impl_one_zero_primitives!(i32, ZqI32);
 impl_one_zero_primitives!(i64, ZqI64);
 impl_one_zero_primitives!(u32, ZqU32);
 impl_one_zero_primitives!(u64, ZqU64);
+impl_one_zero_primitives!(i128, ZqI128);
 
 // ... Impl Neg ...
 
@@ -99,6 +101,7 @@ macro_rules! impl_neg_i {
 
 impl_neg_i!(i32, ZqI32);
 impl_neg_i!(i64, ZqI64);
+impl_neg_i!(i128, ZqI128);
 
 macro_rules! impl_neg_u {
     ($T:ty, $Z:tt) => {
@@ -165,6 +168,7 @@ macro_rules! impl_add {
 
 impl_add!(i32, ZqI32);
 impl_add!(i64, ZqI64);
+impl_add!(i128, ZqI128);
 impl_add!(u32, ZqU32);
 impl_add!(u64, ZqU64);
 
@@ -198,6 +202,7 @@ macro_rules! impl_sub_i {
 
 impl_sub_i!(i32, ZqI32);
 impl_sub_i!(i64, ZqI64);
+impl_sub_i!(i128, ZqI128);
 
 macro_rules! impl_sub_u {
     ($T:ty, $Z:tt) => {
@@ -262,6 +267,7 @@ macro_rules! impl_mul {
 
 impl_mul!(i32, ZqI32);
 impl_mul!(i64, ZqI64);
+impl_mul!(i128, ZqI128);
 impl_mul!(u32, ZqU32);
 impl_mul!(u64, ZqU64);
 
@@ -297,6 +303,7 @@ macro_rules! impl_div_i {
 
 impl_div_i!(i32, ZqI32);
 impl_div_i!(i64, ZqI64);
+impl_div_i!(i128, ZqI128);
 
 macro_rules! impl_div_u {
     ($T:ty, $Z:tt) => {
@@ -419,7 +426,15 @@ mod zqi32_tests {
         let rp = &a * &b;
         let r = a.clone() * b.clone();
         assert_eq!(r, rp);
-        assert!(r.value <= Q / 2);
+        assert!(r.value <= Q / 2 && r.value >= -Q / 2);
+
+        let a = ZqI32::<Q>::new(Q / 2);
+        let b = ZqI32::<Q>::new(-Q / 2);
+        let rp = &a * &b;
+        let r2 = a.clone() * b.clone();
+        assert_eq!(r2, rp);
+        assert!(r2.value <= Q / 2 && r2.value >= -Q / 2);
+        assert!(r.value == -r2.value);
     }
 
     #[test]
@@ -552,7 +567,15 @@ mod zqi64_tests {
         let rp = &a * &b;
         let r = a.clone() * b.clone();
         assert_eq!(r, rp);
-        assert!(r.value <= Q / 2);
+        assert!(r.value <= Q / 2 && r.value >= -Q / 2);
+
+        let a = ZqI64::<Q>::new(Q / 2);
+        let b = ZqI64::<Q>::new(-Q / 2);
+        let rp = &a * &b;
+        let r2 = a.clone() * b.clone();
+        assert_eq!(r2, rp);
+        assert!(r2.value <= Q / 2 && r2.value >= -Q / 2);
+        assert!(r.value == -r2.value);
     }
 
     #[test]
@@ -588,6 +611,147 @@ mod zqi64_tests {
             for j in -3..=3 {
                 let a = ZqI64::<Q>::new(i);
                 let b = ZqI64::<Q>::new(j);
+                let c = &a * &b;
+
+                if b.is_zero() {
+                    continue;
+                }
+
+                if a.is_zero() {
+                    assert!(c.is_zero());
+                    continue;
+                }
+
+                assert_eq!(&c / &b, a.clone());
+                assert_eq!(&c / &a, b.clone(),);
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod zqi128_tests {
+    use super::*;
+
+    #[test]
+    fn test_zqi128_from() {
+        const Q: i128 = 7;
+
+        let a = ZqI128::<Q>::from(10i128);
+        assert_eq!(a.value, 3);
+
+        let b = ZqI128::<Q>::from(-10i128);
+        assert_eq!(b.value, -3);
+    }
+
+    #[test]
+    fn test_zqi128_add() {
+        const Q: i128 = 604462909807314587353021;
+
+        let a = ZqI128::<Q>::new(Q / 2);
+        let b = ZqI128::<Q>::one();
+        let rp = &a + &b;
+        let r = a.clone() + b.clone();
+        assert_eq!(r, rp);
+        assert!(r.value == -Q / 2);
+    }
+
+    #[test]
+    fn test_zqi128_sub() {
+        const Q: i128 = 604462909807314587353021;
+
+        let a = ZqI128::<Q>::new(-Q / 2);
+        let b = ZqI128::<Q>::one();
+        let rp = &a - &b;
+        let r = a.clone() - b.clone();
+        assert_eq!(r, rp);
+        assert!(r.value == Q / 2);
+    }
+
+    #[test]
+    fn test_zqi128_add_sub() {
+        const Q: i128 = 7;
+
+        // check all permutations of [-3,-2,-1,0,1,2,3]
+        for i in -3..=3 {
+            for j in -3..=3 {
+                let a = ZqI128::<Q>::new(i);
+                let b = ZqI128::<Q>::new(j);
+                let c = &a + &b;
+
+                assert_eq!(&c - &a, b.clone());
+                assert_eq!(&c - &b, a.clone());
+            }
+        }
+    }
+
+    #[test]
+    fn test_zqi128_mul() {
+        const Q: i128 = 7;
+
+        // [-3,-2,-1,0,1,2,3] <-> [4,5,6,0,1,2,3]
+        let a = ZqI128::<Q>::new(-3);
+        let b = ZqI128::<Q>::new(-2);
+        let rp = &a * &b;
+        let r = a.clone() * b.clone();
+        assert_eq!(r, rp);
+        // -3 * -2 = 6 = -1 mod 7
+        assert!(r.value == -1);
+    }
+
+    #[test]
+    fn test_zqi128_mul_overflow() {
+        const Q: i128 = 604462909807314587353021;
+
+        let a = ZqI128::<Q>::new(Q / 2);
+        let b = ZqI128::<Q>::new(Q / 2);
+        let rp = &a * &b;
+        let r = a.clone() * b.clone();
+        assert_eq!(r, rp);
+        assert!(r.value <= Q / 2 && r.value >= -Q / 2);
+
+        let a = ZqI128::<Q>::new(Q / 2);
+        let b = ZqI128::<Q>::new(-Q / 2);
+        let rp = &a * &b;
+        let r2 = a.clone() * b.clone();
+        assert_eq!(r2, rp);
+        assert!(r2.value <= Q / 2 && r2.value >= -Q / 2);
+        assert!(r.value == -r2.value);
+    }
+
+    #[test]
+    fn test_zqi128_div() {
+        const Q: i128 = 7;
+
+        // [-3,-2,-1,0,1,2,3] <-> [4,5,6,0,1,2,3]
+        // we had -3 * -2 = 6 = -1 mod 7, so -1 / -2 = -3 mod 7
+        let a = ZqI128::<Q>::new(-1);
+        let b = ZqI128::<Q>::new(-2);
+        let rp = &a / &b;
+        let r = a.clone() / b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, -3);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqi128_div_zero() {
+        const Q: i128 = 7;
+
+        let a = ZqI128::<Q>::one();
+        let b = ZqI128::<Q>::zero();
+        let _ = &a / &b;
+    }
+
+    #[test]
+    fn test_zqi128_mui_div() {
+        const Q: i128 = 7;
+
+        // check all permutations of [-3,-2,-1,0,1,2,3]
+        for i in -3..=3 {
+            for j in -3..=3 {
+                let a = ZqI128::<Q>::new(i);
+                let b = ZqI128::<Q>::new(j);
                 let c = &a * &b;
 
                 if b.is_zero() {
