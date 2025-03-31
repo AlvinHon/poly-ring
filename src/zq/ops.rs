@@ -34,6 +34,18 @@ impl<const Q: i64> From<i32> for ZqI64<Q> {
     }
 }
 
+impl<const Q: i128> From<i32> for ZqI128<Q> {
+    fn from(value: i32) -> Self {
+        Self::new(value as i128)
+    }
+}
+
+impl<const Q: i128> From<i64> for ZqI128<Q> {
+    fn from(value: i64) -> Self {
+        Self::new(value as i128)
+    }
+}
+
 impl<const Q: u64> From<u32> for ZqU64<Q> {
     fn from(value: u32) -> Self {
         Self::new(value as u64)
