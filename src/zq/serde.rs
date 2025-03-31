@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{ZqI128, ZqI32, ZqI64, ZqU32, ZqU64};
+use super::{ZqI128, ZqI32, ZqI64, ZqU128, ZqU32, ZqU64};
 
 macro_rules! impl_serde_for_zq {
     ($T:ty, $Z:tt) => {
@@ -30,6 +30,7 @@ impl_serde_for_zq!(i64, ZqI64);
 impl_serde_for_zq!(i128, ZqI128);
 impl_serde_for_zq!(u32, ZqU32);
 impl_serde_for_zq!(u64, ZqU64);
+impl_serde_for_zq!(u128, ZqU128);
 
 #[cfg(test)]
 mod tests {
@@ -80,6 +81,16 @@ mod tests {
         let z = ZqU64::<7>::new(3);
         let serialized_z = bincode::serialize(&z).unwrap();
         assert_eq!(serialized_z.len(), 8);
+
+        let deserialized_z = bincode::deserialize(&serialized_z).unwrap();
+        assert_eq!(z, deserialized_z);
+    }
+
+    #[test]
+    fn test_zqu128_serde() {
+        let z = ZqU128::<7>::new(3);
+        let serialized_z = bincode::serialize(&z).unwrap();
+        assert_eq!(serialized_z.len(), 16);
 
         let deserialized_z = bincode::deserialize(&serialized_z).unwrap();
         assert_eq!(z, deserialized_z);

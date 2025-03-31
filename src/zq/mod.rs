@@ -178,7 +178,34 @@ impl<const Q: u64> ZqU64<Q> {
     }
 }
 
-macro_rules! impl_change_moduus {
+/// A type representing an element of the ring Z/QZ.
+///
+/// ## Safety
+/// Q should be an odd prime number. Although the primality of Q is not checked in the implementation,
+/// its implementation makes this assumption for achieving some important properties of ring Z/QZ.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ZqU128<const Q: u128> {
+    pub(crate) value: u128,
+}
+
+impl<const Q: u128> ZqU128<Q> {
+    /// Creates a new `ZqU128` from the given value.
+    pub fn new(value: u128) -> Self {
+        Self {
+            value: value.rem_euclid(Q),
+        }
+    }
+
+    pub(crate) fn safe_new(value: num::BigInt) -> Self {
+        use num::ToPrimitive;
+        let q = num::BigUint::from(Q);
+        Self {
+            value: (value.to_biguint().unwrap() % &q).to_u128().unwrap(),
+        }
+    }
+}
+
+macro_rules! impl_change_modulus {
     ($T:ty,  $Z:tt) => {
         impl<const Q: $T> $Z<Q> {
             pub fn change_modulus<const Q2: $T>(&self) -> $Z<Q2> {
@@ -188,11 +215,12 @@ macro_rules! impl_change_moduus {
     };
 }
 
-impl_change_moduus!(i32, ZqI32);
-impl_change_moduus!(i64, ZqI64);
-impl_change_moduus!(i128, ZqI128);
-impl_change_moduus!(u32, ZqU32);
-impl_change_moduus!(u64, ZqU64);
+impl_change_modulus!(i32, ZqI32);
+impl_change_modulus!(i64, ZqI64);
+impl_change_modulus!(i128, ZqI128);
+impl_change_modulus!(u32, ZqU32);
+impl_change_modulus!(u64, ZqU64);
+impl_change_modulus!(u128, ZqU128);
 
 #[cfg(test)]
 mod change_modulus_tests {
@@ -226,5 +254,8 @@ mod change_modulus_tests {
 
         let zq = ZqU64::<7>::new(10);
         assert_eq!(zq.change_modulus::<5>(), ZqU64::<5>::new(3));
+
+        let zq = ZqU128::<7>::new(3);
+        assert_eq!(zq.change_modulus::<5>(), ZqU128::<5>::new(3));
     }
 }

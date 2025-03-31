@@ -103,6 +103,27 @@ macro_rules! zqu64_vec {
     }};
 }
 
+/// A macro to create a vector of `ZqU128`. It transforms the following code:
+///
+/// ```ignore
+/// zqu128_vec![1,2,3 ; Q]
+/// ```
+///
+/// into
+///
+/// ```ignore
+/// vec![ZqU128::<Q>::new(1), ZqU128::<Q>::new(2), ZqU128::<Q>::new(3)]
+/// ```
+///
+/// Please note the semi-colon `;` is not for specifying the length of the vector (as vec! macro does),
+/// but for specifying the value of the prime modulus Q.
+#[macro_export]
+macro_rules! zqu128_vec {
+    ($($x:expr),* ; $Q:expr) => {{
+        vec![ $($crate::zq::ZqU128::<$Q>::new($x)),* ]
+    }};
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -136,6 +157,13 @@ mod tests {
     #[test]
     fn test_zqu64_vec() {
         let v = zqu64_vec![12, 8, 0, 6; 7];
+        let values = v.iter().map(|x| x.value).collect::<Vec<_>>();
+        assert_eq!(values, vec![5, 1, 0, 6]);
+    }
+
+    #[test]
+    fn test_zqu128_vec() {
+        let v = zqu128_vec![12, 8, 0, 6; 7];
         let values = v.iter().map(|x| x.value).collect::<Vec<_>>();
         assert_eq!(values, vec![5, 1, 0, 6]);
     }

@@ -1,6 +1,6 @@
 use num::{traits::Inv, Integer, Zero};
 
-use super::{ZqI128, ZqI32, ZqI64, ZqU32, ZqU64};
+use super::{ZqI128, ZqI32, ZqI64, ZqU128, ZqU32, ZqU64};
 
 macro_rules! impl_inv_zqi {
     ($T:ty, $Z:tt) => {
@@ -74,6 +74,7 @@ macro_rules! impl_inv_zqu {
 
 impl_inv_zqu!(u32, ZqU32);
 impl_inv_zqu!(u64, ZqU64);
+impl_inv_zqu!(u128, ZqU128);
 
 #[cfg(test)]
 mod tests {
@@ -136,6 +137,18 @@ mod tests {
 
         // 2 * 4 = 8 = 1 mod 7, so 2^-1 = 4 mod 7
         let a = ZqU64::<Q>::new(2);
+        let rp = (&a).inv();
+        let r = a.clone().inv();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 4);
+    }
+
+    #[test]
+    fn test_zqu128_inv() {
+        const Q: u128 = 7;
+
+        // 2 * 4 = 8 = 1 mod 7, so 2^-1 = 4 mod 7
+        let a = ZqU128::<Q>::new(2);
         let rp = (&a).inv();
         let r = a.clone().inv();
         assert_eq!(r, rp);
