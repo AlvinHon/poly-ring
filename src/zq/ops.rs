@@ -167,7 +167,7 @@ impl_neg_u!(u128, ZqU128);
 
 // ... Impl Add ...
 
-macro_rules! impl_add {
+macro_rules! impl_add_i {
     ($T:ty, $Z:tt) => {
         impl<const Q: $T> Add for $Z<Q> {
             type Output = Self;
@@ -189,12 +189,38 @@ macro_rules! impl_add {
     };
 }
 
-impl_add!(i32, ZqI32);
-impl_add!(i64, ZqI64);
-impl_add!(i128, ZqI128);
-impl_add!(u32, ZqU32);
-impl_add!(u64, ZqU64);
-impl_add!(u128, ZqU128);
+macro_rules! impl_add_u {
+    ($T:ty, $Z:tt) => {
+        impl<const Q: $T> Add for $Z<Q> {
+            type Output = Self;
+
+            fn add(self, rhs: Self) -> Self::Output {
+                match self.value.checked_add(rhs.value) {
+                    Some(v) => Self::new(v),
+                    None => Self::safe_new(BigInt::from(self.value) + BigInt::from(rhs.value)),
+                }
+            }
+        }
+
+        impl<const Q: $T> Add for &$Z<Q> {
+            type Output = $Z<Q>;
+
+            fn add(self, rhs: Self) -> Self::Output {
+                match self.value.checked_add(rhs.value) {
+                    Some(v) => $Z::new(v),
+                    None => $Z::safe_new(BigInt::from(self.value) + BigInt::from(rhs.value)),
+                }
+            }
+        }
+    };
+}
+
+impl_add_i!(i32, ZqI32);
+impl_add_i!(i64, ZqI64);
+impl_add_i!(i128, ZqI128);
+impl_add_u!(u32, ZqU32);
+impl_add_u!(u64, ZqU64);
+impl_add_u!(u128, ZqU128);
 
 // ... Impl Sub ...
 
@@ -841,6 +867,18 @@ mod zqu32_tests {
     }
 
     #[test]
+    fn test_zqu32_add_overflow() {
+        const Q: u32 = u32::MAX;
+
+        let a = ZqU32::<Q>::new(Q - 1);
+        let b = ZqU32::<Q>::new(2);
+        let rp = &a + &b;
+        let r = a.clone() + b.clone();
+        assert_eq!(r, rp);
+        assert!(r.value == 1);
+    }
+
+    #[test]
     fn test_zqu32_sub() {
         const Q: u32 = 2147483647;
 
@@ -972,6 +1010,18 @@ mod zqu64_tests {
         let r = a.clone() + b.clone();
         assert_eq!(r, rp);
         assert!(r.value == 0);
+    }
+
+    #[test]
+    fn test_zqu64_add_overflow() {
+        const Q: u64 = u64::MAX;
+
+        let a = ZqU64::<Q>::new(Q - 1);
+        let b = ZqU64::<Q>::new(2);
+        let rp = &a + &b;
+        let r = a.clone() + b.clone();
+        assert_eq!(r, rp);
+        assert!(r.value == 1);
     }
 
     #[test]
@@ -1109,6 +1159,18 @@ mod zqu128_tests {
         let r = a.clone() + b.clone();
         assert_eq!(r, rp);
         assert!(r.value == 0);
+    }
+
+    #[test]
+    fn test_zqu128_add_overflow() {
+        const Q: u128 = u128::MAX;
+
+        let a = ZqU128::<Q>::new(Q - 1);
+        let b = ZqU128::<Q>::new(2);
+        let rp = &a + &b;
+        let r = a.clone() + b.clone();
+        assert_eq!(r, rp);
+        assert!(r.value == 1);
     }
 
     #[test]
