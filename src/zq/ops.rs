@@ -173,10 +173,8 @@ macro_rules! impl_add {
             type Output = Self;
 
             fn add(self, rhs: Self) -> Self::Output {
-                match self.value.checked_add(rhs.value) {
-                    Some(v) => Self::new(v),
-                    None => Self::safe_new(BigInt::from(self.value) + BigInt::from(rhs.value)),
-                }
+                // Should not overflow because the max of value and rhs is Q / 2.
+                Self::new(self.value.add(rhs.value))
             }
         }
 
@@ -184,10 +182,8 @@ macro_rules! impl_add {
             type Output = $Z<Q>;
 
             fn add(self, rhs: Self) -> Self::Output {
-                match self.value.checked_add(rhs.value) {
-                    Some(v) => $Z::new(v),
-                    None => $Z::safe_new(BigInt::from(self.value) + BigInt::from(rhs.value)),
-                }
+                // Should not overflow because the max of value and rhs is Q / 2.
+                $Z::new(self.value.add(rhs.value))
             }
         }
     };
@@ -208,10 +204,8 @@ macro_rules! impl_sub_i {
             type Output = Self;
 
             fn sub(self, rhs: Self) -> Self::Output {
-                match self.value.checked_sub(rhs.value) {
-                    Some(v) => Self::new(v),
-                    None => Self::safe_new(BigInt::from(self.value) - BigInt::from(rhs.value)),
-                }
+                // Should not underflow because the min of value and rhs is -Q / 2.
+                Self::new(self.value.sub(rhs.value))
             }
         }
 
@@ -219,10 +213,8 @@ macro_rules! impl_sub_i {
             type Output = $Z<Q>;
 
             fn sub(self, rhs: Self) -> Self::Output {
-                match self.value.checked_sub(rhs.value) {
-                    Some(v) => $Z::new(v),
-                    None => $Z::safe_new(BigInt::from(self.value) - BigInt::from(rhs.value)),
-                }
+                // Should not underflow because the min of value and rhs is -Q / 2.
+                $Z::new(self.value.sub(rhs.value))
             }
         }
     };
@@ -429,7 +421,9 @@ mod zqi32_tests {
                 let c = &a + &b;
 
                 assert_eq!(&c - &a, b.clone());
+                assert_eq!(c.clone() - a.clone(), b.clone());
                 assert_eq!(&c - &b, a.clone());
+                assert_eq!(c.clone() - b.clone(), a.clone());
             }
         }
     }
@@ -484,12 +478,14 @@ mod zqi32_tests {
 
     #[test]
     #[should_panic]
-    fn test_zqi32_div_zero() {
-        const Q: i32 = 7;
+    fn test_zqi32_div_zero_ref() {
+        let _ = &ZqI32::<7>::one() / &ZqI32::<7>::zero();
+    }
 
-        let a = ZqI32::<Q>::one();
-        let b = ZqI32::<Q>::zero();
-        let _ = &a / &b;
+    #[test]
+    #[should_panic]
+    fn test_zqi32_div_zero() {
+        let _ = ZqI32::<7>::one() / ZqI32::<7>::zero();
     }
 
     #[test]
@@ -570,7 +566,9 @@ mod zqi64_tests {
                 let c = &a + &b;
 
                 assert_eq!(&c - &a, b.clone());
+                assert_eq!(c.clone() - a.clone(), b.clone());
                 assert_eq!(&c - &b, a.clone());
+                assert_eq!(c.clone() - b.clone(), a.clone());
             }
         }
     }
@@ -625,12 +623,14 @@ mod zqi64_tests {
 
     #[test]
     #[should_panic]
-    fn test_zqi64_div_zero() {
-        const Q: i64 = 7;
+    fn test_zqi64_div_zero_ref() {
+        let _ = &ZqI64::<7>::one() / &ZqI64::<7>::zero();
+    }
 
-        let a = ZqI64::<Q>::one();
-        let b = ZqI64::<Q>::zero();
-        let _ = &a / &b;
+    #[test]
+    #[should_panic]
+    fn test_zqi64_div_zero() {
+        let _ = ZqI64::<7>::one() / ZqI64::<7>::zero();
     }
 
     #[test]
@@ -673,6 +673,18 @@ mod zqi128_tests {
 
         let b = ZqI128::<Q>::from(-10i128);
         assert_eq!(b.value, -3);
+
+        let a = ZqI128::<Q>::from(10i64);
+        assert_eq!(a.value, 3);
+
+        let b = ZqI128::<Q>::from(-10i64);
+        assert_eq!(b.value, -3);
+
+        let a = ZqI128::<Q>::from(10i32);
+        assert_eq!(a.value, 3);
+
+        let b = ZqI128::<Q>::from(-10i32);
+        assert_eq!(b.value, -3);
     }
 
     #[test]
@@ -711,7 +723,9 @@ mod zqi128_tests {
                 let c = &a + &b;
 
                 assert_eq!(&c - &a, b.clone());
+                assert_eq!(c.clone() - a.clone(), b.clone());
                 assert_eq!(&c - &b, a.clone());
+                assert_eq!(c.clone() - b.clone(), a.clone());
             }
         }
     }
@@ -766,12 +780,14 @@ mod zqi128_tests {
 
     #[test]
     #[should_panic]
-    fn test_zqi128_div_zero() {
-        const Q: i128 = 7;
+    fn test_zqi128_div_zero_ref() {
+        let _ = &ZqI128::<7>::one() / &ZqI128::<7>::zero();
+    }
 
-        let a = ZqI128::<Q>::one();
-        let b = ZqI128::<Q>::zero();
-        let _ = &a / &b;
+    #[test]
+    #[should_panic]
+    fn test_zqi128_div_zero() {
+        let _ = ZqI128::<7>::one() / ZqI128::<7>::zero();
     }
 
     #[test]
@@ -848,7 +864,9 @@ mod zqu32_tests {
                 let c = &a + &b;
 
                 assert_eq!(&c - &a, b.clone());
+                assert_eq!(c.clone() - a.clone(), b.clone());
                 assert_eq!(&c - &b, a.clone());
+                assert_eq!(c.clone() - b.clone(), a.clone());
             }
         }
     }
@@ -893,12 +911,14 @@ mod zqu32_tests {
 
     #[test]
     #[should_panic]
-    fn test_zqu32_div_zero() {
-        const Q: u32 = 7;
+    fn test_zqu32_div_zero_ref() {
+        let _ = &ZqU32::<7>::one() / &ZqU32::<7>::zero();
+    }
 
-        let a = ZqU32::<Q>::one();
-        let b = ZqU32::<Q>::zero();
-        let _ = &a / &b;
+    #[test]
+    #[should_panic]
+    fn test_zqu32_div_zero() {
+        let _ = ZqU32::<7>::one() / ZqU32::<7>::zero();
     }
 
     #[test]
@@ -936,6 +956,9 @@ mod zqu64_tests {
     fn test_zqu64_from() {
         const Q: u64 = 7;
         let a = ZqU64::<Q>::from(10u64);
+        assert_eq!(a.value, 3);
+
+        let a = ZqU64::<Q>::from(10u32);
         assert_eq!(a.value, 3);
     }
 
@@ -975,7 +998,9 @@ mod zqu64_tests {
                 let c = &a + &b;
 
                 assert_eq!(&c - &a, b.clone());
+                assert_eq!(c.clone() - a.clone(), b.clone());
                 assert_eq!(&c - &b, a.clone());
+                assert_eq!(c.clone() - b.clone(), a.clone());
             }
         }
     }
@@ -1020,12 +1045,14 @@ mod zqu64_tests {
 
     #[test]
     #[should_panic]
-    fn test_zqu64_div_zero() {
-        const Q: u64 = 7;
+    fn test_zqu64_div_zero_ref() {
+        let _ = &ZqU64::<7>::one() / &ZqU64::<7>::zero();
+    }
 
-        let a = ZqU64::<Q>::one();
-        let b = ZqU64::<Q>::zero();
-        let _ = &a / &b;
+    #[test]
+    #[should_panic]
+    fn test_zqu64_div_zero() {
+        let _ = ZqU64::<7>::one() / ZqU64::<7>::zero();
     }
 
     #[test]
@@ -1062,7 +1089,13 @@ mod zqu128_tests {
     #[test]
     fn test_zqu128_from() {
         const Q: u128 = 7;
+        let a = ZqU128::<Q>::from(10u128);
+        assert_eq!(a.value, 3);
+
         let a = ZqU128::<Q>::from(10u64);
+        assert_eq!(a.value, 3);
+
+        let a = ZqU128::<Q>::from(10u32);
         assert_eq!(a.value, 3);
     }
 
@@ -1102,7 +1135,9 @@ mod zqu128_tests {
                 let c = &a + &b;
 
                 assert_eq!(&c - &a, b.clone());
+                assert_eq!(c.clone() - a.clone(), b.clone());
                 assert_eq!(&c - &b, a.clone());
+                assert_eq!(c.clone() - b.clone(), a.clone());
             }
         }
     }
@@ -1147,12 +1182,14 @@ mod zqu128_tests {
 
     #[test]
     #[should_panic]
-    fn test_zqu128_div_zero() {
-        const Q: u128 = 7;
+    fn test_zqu128_div_zero_ref() {
+        let _ = &ZqU128::<7>::one() / &ZqU128::<7>::zero();
+    }
 
-        let a = ZqU128::<Q>::one();
-        let b = ZqU128::<Q>::zero();
-        let _ = &a / &b;
+    #[test]
+    #[should_panic]
+    fn test_zqu128_div_zero() {
+        let _ = ZqU128::<7>::one() / ZqU128::<7>::zero();
     }
 
     #[test]
