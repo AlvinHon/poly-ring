@@ -1,3 +1,6 @@
+### 0.3.2 (5-Apr-2025)
+- Add structs ZqI128 and ZqU128
+
 ### 0.3.1 (28-Mar-2025)
 - Add github action CI script for testing and building.
 - Add codecov for code coverage.
