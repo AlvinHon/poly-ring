@@ -94,6 +94,18 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_zqi32_inv_by_zero() {
+        ZqI32::<7>::new(0).inv();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqi32_clone_inv_by_zero() {
+        ZqI32::<7>::new(0).clone().inv();
+    }
+
+    #[test]
     fn test_zqi64_inv() {
         const Q: i64 = 7;
 
@@ -104,6 +116,18 @@ mod tests {
         let r = a.clone().inv();
         assert_eq!(r, rp);
         assert_eq!(r.value, -3);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqi64_inv_by_zero() {
+        ZqI64::<7>::new(0).inv();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqi64_inv_clone_by_zero() {
+        ZqI64::<7>::new(0).clone().inv();
     }
 
     #[test]
@@ -120,6 +144,18 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_zqi128_inv_by_zero() {
+        ZqI128::<7>::new(0).inv();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqi128_inv_clone_by_zero() {
+        ZqI128::<7>::new(0).clone().inv();
+    }
+
+    #[test]
     fn test_zqu32_inv() {
         const Q: u32 = 7;
 
@@ -129,6 +165,18 @@ mod tests {
         let r = a.clone().inv();
         assert_eq!(r, rp);
         assert_eq!(r.value, 4);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqu32_inv_by_zero() {
+        ZqU32::<7>::new(0).inv();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqu32_inv_clone_by_zero() {
+        ZqU32::<7>::new(0).clone().inv();
     }
 
     #[test]
@@ -144,6 +192,18 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_zqu64_inv_by_zero() {
+        ZqU64::<7>::new(0).inv();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqu64_inv_clone_by_zero() {
+        ZqU64::<7>::new(0).clone().inv();
+    }
+
+    #[test]
     fn test_zqu128_inv() {
         const Q: u128 = 7;
 
@@ -153,5 +213,17 @@ mod tests {
         let r = a.clone().inv();
         assert_eq!(r, rp);
         assert_eq!(r.value, 4);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqu128_inv_by_zero() {
+        ZqU128::<7>::new(0).inv();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_zqu128_inv_clone_by_zero() {
+        ZqU128::<7>::new(0).clone().inv();
     }
 }

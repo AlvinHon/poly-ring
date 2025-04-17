@@ -142,6 +142,17 @@ mod tests {
     const N: usize = 512; // power of two
 
     #[test]
+    fn test_trim_zeros() {
+        let mut coeffs = vec![1, 2, 3, 0, 0, 0];
+        trim_zeros(&mut coeffs);
+        assert_eq!(coeffs, vec![1, 2, 3]);
+
+        let mut coeffs = vec![0, 0, 0];
+        trim_zeros(&mut coeffs);
+        assert_eq!(coeffs, vec![]);
+    }
+
+    #[test]
     fn test_add() {
         let p1 = Polynomial::<i32, N>::new(vec![1, 2, 3]);
         let p2 = Polynomial::new(vec![4, 5]);

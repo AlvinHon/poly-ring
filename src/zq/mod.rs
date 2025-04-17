@@ -104,11 +104,8 @@ impl<const Q: i128> ZqI128<Q> {
             let mut r = value % q.clone();
 
             if r < BigInt::zero() {
-                if q.clone() < BigInt::zero() {
-                    r -= q.clone();
-                } else {
-                    r += q.clone();
-                }
+                // q is odd prime number, so q is positive
+                r += q.clone();
             }
 
             r

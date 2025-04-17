@@ -42,18 +42,15 @@ where
         B1: SampleBorrow<Self::X> + Sized,
         B2: SampleBorrow<Self::X> + Sized,
     {
-        let low = match low.borrow().iter().min() {
-            Some(low) => low,
-            None => return Err(rand::distr::uniform::Error::EmptyRange),
-        };
-        let high = match high.borrow().iter().max() {
-            Some(high) => high,
-            None => return Err(rand::distr::uniform::Error::EmptyRange),
-        };
-        if high < low {
-            return Err(rand::distr::uniform::Error::EmptyRange);
+        let low = low.borrow().iter().min();
+        let high = high.borrow().iter().max();
+
+        match (low, high) {
+            (Some(low), Some(high)) if high >= low => {
+                Uniform::<T>::new(low, high).map(PolynomialSampler)
+            }
+            _ => Err(rand::distr::uniform::Error::EmptyRange),
         }
-        Uniform::<T>::new(low, high).map(PolynomialSampler)
     }
 
     fn new_inclusive<B1, B2>(low: B1, high: B2) -> Result<Self, rand::distr::uniform::Error>
@@ -207,10 +204,14 @@ mod tests {
         let p1 = Polynomial::<ZqI32<23>, 4>::new(vec![1, 2, 3, 4]);
         let p2 = Polynomial::<ZqI32<23>, 4>::new(vec![5, 6, 7, 8]);
         assert!(PolynomialSampler::new(p2.clone(), p1.clone()).is_err()); // max coeffs of right < min coeffs of left
-        let s = PolynomialSampler::new(p1, p2).unwrap();
+        let s = PolynomialSampler::new(p1.clone(), p2.clone()).unwrap();
         let p = s.sample(rng);
         p.iter()
             .for_each(|c| assert!(ZqI32::<23>::from(1) <= *c && *c < ZqI32::<23>::from(8)));
+        let s = PolynomialSampler::new_inclusive(p1, p2).unwrap();
+        let p = s.sample(rng);
+        p.iter()
+            .for_each(|c| assert!(ZqI32::<23>::from(1) <= *c && *c <= ZqI32::<23>::from(8)));
 
         // .. test coeffs range ..
 
@@ -225,5 +226,16 @@ mod tests {
         let p: Polynomial<ZqI32<23>, 4> = rng.random_range(r);
         p.iter()
             .for_each(|c| assert!(ZqI32::<23>::from(-3) <= *c && *c < ZqI32::<23>::from(3)));
+    }
+
+    #[cfg(feature = "zq")]
+    #[test]
+    #[should_panic]
+    fn test_random_sample_empty_range() {
+        use crate::zq::ZqI32;
+        let rng = &mut rand::rng();
+
+        let empty_range = CoeffsRange::from(ZqI32::<23>::from(3)..ZqI32::<23>::from(3));
+        let _: Polynomial<ZqI32<23>, 4> = rng.random_range(empty_range);
     }
 }
