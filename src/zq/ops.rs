@@ -1,6 +1,6 @@
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
-use num::{BigInt, Integer, One, Zero};
+use num::{BigInt, Integer, Zero};
 
 use super::{ZqI128, ZqI32, ZqI64, ZqU128, ZqU32, ZqU64};
 
@@ -64,36 +64,6 @@ impl<const Q: u128> From<u64> for ZqU128<Q> {
         Self::new(value as u128)
     }
 }
-
-// ... Impl One ...
-// ... Impl Zero ...
-
-macro_rules! impl_one_zero_primitives {
-    ($T:ty, $Z:tt) => {
-        impl<const Q: $T> Zero for $Z<Q> {
-            fn zero() -> Self {
-                Self { value: 0 }
-            }
-
-            fn is_zero(&self) -> bool {
-                self.value == 0
-            }
-        }
-
-        impl<const Q: $T> One for $Z<Q> {
-            fn one() -> Self {
-                Self { value: 1 }
-            }
-        }
-    };
-}
-
-impl_one_zero_primitives!(i32, ZqI32);
-impl_one_zero_primitives!(i64, ZqI64);
-impl_one_zero_primitives!(u32, ZqU32);
-impl_one_zero_primitives!(u64, ZqU64);
-impl_one_zero_primitives!(i128, ZqI128);
-impl_one_zero_primitives!(u128, ZqU128);
 
 // ... Impl Neg ...
 
@@ -396,8 +366,40 @@ impl_div_u!(u32, ZqU32);
 impl_div_u!(u64, ZqU64);
 impl_div_u!(u128, ZqU128);
 
+// ... Impl Rem ...
+
+macro_rules! impl_rem_i {
+    ($T:ty, $Z:tt) => {
+        impl<const Q: $T> Rem for $Z<Q> {
+            type Output = Self;
+
+            fn rem(self, rhs: Self) -> Self::Output {
+                Self::new(self.value % rhs.value)
+            }
+        }
+
+        impl<const Q: $T> Rem for &$Z<Q> {
+            type Output = $Z<Q>;
+
+            fn rem(self, rhs: Self) -> Self::Output {
+                $Z::new(self.value % rhs.value)
+            }
+        }
+    };
+}
+
+impl_rem_i!(i32, ZqI32);
+impl_rem_i!(i64, ZqI64);
+impl_rem_i!(i128, ZqI128);
+
+// Rem for unsigned types is not necessary because the standard remainder formula
+// is dividend - (dividend / divisor) * divisor, which means the result is always
+// zero.
+
 #[cfg(test)]
 mod zqi32_tests {
+    use num::One;
+
     use super::*;
 
     #[test]
@@ -539,10 +541,45 @@ mod zqi32_tests {
             }
         }
     }
+
+    #[test]
+    fn test_zqi32_rem() {
+        const Q: i32 = 7;
+
+        let a = ZqI32::<Q>::new(10);
+        let b = ZqI32::<Q>::new(3);
+        let rp = &a % &b;
+        let r = a.clone() % b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 0);
+
+        let a = ZqI32::<Q>::new(-10);
+        let b = ZqI32::<Q>::new(3);
+        let rp = &a % &b;
+        let r = a.clone() % b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 0);
+
+        let a = ZqI32::<Q>::new(10);
+        let b = ZqI32::<Q>::new(-3);
+        let rp = &a % &b;
+        let r = a.clone() % b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 0);
+
+        let a = ZqI32::<Q>::new(-10);
+        let b = ZqI32::<Q>::new(-3);
+        let rp = &a % &b;
+        let r = a.clone() % b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 0);
+    }
 }
 
 #[cfg(test)]
 mod zqi64_tests {
+    use num::One;
+
     use super::*;
 
     #[test]
@@ -684,10 +721,45 @@ mod zqi64_tests {
             }
         }
     }
+
+    #[test]
+    fn test_zqi64_rem() {
+        const Q: i64 = 7;
+
+        let a = ZqI64::<Q>::new(10);
+        let b = ZqI64::<Q>::new(3);
+        let rp = &a % &b;
+        let r = a.clone() % b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 0);
+
+        let a = ZqI64::<Q>::new(-10);
+        let b = ZqI64::<Q>::new(3);
+        let rp = &a % &b;
+        let r = a.clone() % b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 0);
+
+        let a = ZqI64::<Q>::new(10);
+        let b = ZqI64::<Q>::new(-3);
+        let rp = &a % &b;
+        let r = a.clone() % b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 0);
+
+        let a = ZqI64::<Q>::new(-10);
+        let b = ZqI64::<Q>::new(-3);
+        let rp = &a % &b;
+        let r = a.clone() % b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 0);
+    }
 }
 
 #[cfg(test)]
 mod zqi128_tests {
+    use num::One;
+
     use super::*;
 
     #[test]
@@ -841,10 +913,45 @@ mod zqi128_tests {
             }
         }
     }
+
+    #[test]
+    fn test_zqi128_rem() {
+        const Q: i128 = 7;
+
+        let a = ZqI128::<Q>::new(10);
+        let b = ZqI128::<Q>::new(3);
+        let rp = &a % &b;
+        let r = a.clone() % b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 0);
+
+        let a = ZqI128::<Q>::new(-10);
+        let b = ZqI128::<Q>::new(3);
+        let rp = &a % &b;
+        let r = a.clone() % b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 0);
+
+        let a = ZqI128::<Q>::new(10);
+        let b = ZqI128::<Q>::new(-3);
+        let rp = &a % &b;
+        let r = a.clone() % b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 0);
+
+        let a = ZqI128::<Q>::new(-10);
+        let b = ZqI128::<Q>::new(-3);
+        let rp = &a % &b;
+        let r = a.clone() % b.clone();
+        assert_eq!(r, rp);
+        assert_eq!(r.value, 0);
+    }
 }
 
 #[cfg(test)]
 mod zqu32_tests {
+    use num::One;
+
     use super::*;
 
     #[test]
@@ -988,6 +1095,8 @@ mod zqu32_tests {
 
 #[cfg(test)]
 mod zqu64_tests {
+    use num::One;
+
     use super::*;
 
     #[test]
@@ -1134,6 +1243,8 @@ mod zqu64_tests {
 
 #[cfg(test)]
 mod zqu128_tests {
+    use num::One;
+
     use super::*;
 
     #[test]

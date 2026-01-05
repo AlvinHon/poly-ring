@@ -1,7 +1,8 @@
-use num::{BigInt, Zero};
+use num::{BigInt, Num, Zero};
 
 pub mod bytes;
 pub mod cast;
+pub mod identities;
 pub mod inv;
 pub mod macros;
 pub mod ops;
@@ -9,8 +10,9 @@ pub mod ops;
 pub mod rand;
 #[cfg(feature = "serde")]
 pub mod serde;
+pub mod sign;
 
-/// A type representing an element of the ring Z/QZ. The value is normalized to the range \[-Q/2, Q/2\).
+/// A type representing an element of the ring Z/QZ. The value is normalized to the range \[-Q/2, Q/2\].
 ///
 /// ## Safety
 /// Q should be an odd prime number. Although the primality of Q is not checked in the implementation,
@@ -21,7 +23,7 @@ pub struct ZqI32<const Q: i32> {
 }
 
 impl<const Q: i32> ZqI32<Q> {
-    /// Creates a new `ZqI32` from the given value. It normalizes the value to the range \[-Q/2, Q/2\).
+    /// Creates a new `ZqI32` from the given value. It normalizes the value to the range \[-Q/2, Q/2\].
     pub fn new(value: i32) -> Self {
         let a = value.rem_euclid(Q);
         if a > Q / 2 {
@@ -42,7 +44,7 @@ impl<const Q: i32> ZqI32<Q> {
     }
 }
 
-/// A type representing an element of the ring Z/QZ. The value is normalized to the range \[-Q/2, Q/2\).
+/// A type representing an element of the ring Z/QZ. The value is normalized to the range \[-Q/2, Q/2\].
 ///
 /// ## Safety
 /// Q should be an odd prime number. Although the primality of Q is not checked in the implementation,
@@ -53,7 +55,7 @@ pub struct ZqI64<const Q: i64> {
 }
 
 impl<const Q: i64> ZqI64<Q> {
-    /// Creates a new `ZqI64` from the given value. It normalizes the value to the range \[-Q/2, Q/2\).
+    /// Creates a new `ZqI64` from the given value. It normalizes the value to the range \[-Q/2, Q/2\].
     pub fn new(value: i64) -> Self {
         let a = value.rem_euclid(Q);
         if a > Q / 2 {
@@ -74,7 +76,7 @@ impl<const Q: i64> ZqI64<Q> {
     }
 }
 
-/// A type representing an element of the ring Z/QZ. The value is normalized to the range \[-Q/2, Q/2\).
+/// A type representing an element of the ring Z/QZ. The value is normalized to the range \[-Q/2, Q/2\].
 ///
 /// ## Safety
 /// Q should be an odd prime number. Although the primality of Q is not checked in the implementation,
@@ -85,7 +87,7 @@ pub struct ZqI128<const Q: i128> {
 }
 
 impl<const Q: i128> ZqI128<Q> {
-    /// Creates a new `ZqI128` from the given value. It normalizes the value to the range \[-Q/2, Q/2\).
+    /// Creates a new `ZqI128` from the given value. It normalizes the value to the range \[-Q/2, Q/2\].
     pub fn new(value: i128) -> Self {
         let a = value.rem_euclid(Q);
         if a > Q / 2 {
@@ -205,6 +207,7 @@ impl<const Q: u128> ZqU128<Q> {
 macro_rules! impl_change_modulus {
     ($T:ty,  $Z:tt) => {
         impl<const Q: $T> $Z<Q> {
+            /// Changes the modulus of the current `Zq` element to a new modulus `Q2`.
             pub fn change_modulus<const Q2: $T>(&self) -> $Z<Q2> {
                 $Z::<Q2>::new(self.value)
             }
@@ -219,8 +222,25 @@ impl_change_modulus!(u32, ZqU32);
 impl_change_modulus!(u64, ZqU64);
 impl_change_modulus!(u128, ZqU128);
 
+macro_rules! impl_num {
+    ($T:ty,  $Z:tt) => {
+        impl<const Q: $T> Num for $Z<Q> {
+            type FromStrRadixErr = std::num::ParseIntError;
+
+            fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
+                let value = <$T>::from_str_radix(str, radix)?;
+                Ok(Self::new(value))
+            }
+        }
+    };
+}
+
+impl_num!(i32, ZqI32);
+impl_num!(i64, ZqI64);
+impl_num!(i128, ZqI128);
+
 #[cfg(test)]
-mod change_modulus_tests {
+mod tests {
     use super::*;
 
     #[test]
@@ -254,5 +274,17 @@ mod change_modulus_tests {
 
         let zq = ZqU128::<7>::new(3);
         assert_eq!(zq.change_modulus::<5>(), ZqU128::<5>::new(3));
+    }
+
+    #[test]
+    fn test_from_str_radix() {
+        let zq: ZqI32<7> = Num::from_str_radix("10", 10).unwrap();
+        assert_eq!(zq, ZqI32::<7>::new(3));
+
+        let zq: ZqI64<7> = Num::from_str_radix("10", 10).unwrap();
+        assert_eq!(zq, ZqI64::<7>::new(3));
+
+        let zq: ZqI128<7> = Num::from_str_radix("10", 10).unwrap();
+        assert_eq!(zq, ZqI128::<7>::new(3));
     }
 }

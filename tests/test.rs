@@ -34,6 +34,45 @@ fn test_abelian_group_under_addition() {
     }
 }
 
+#[cfg(all(feature = "zq"))]
+#[test]
+fn test_abelian_group_under_addition_over_zq() {
+    use poly_ring_xnp1::zq::ZqI32;
+    let rng = &mut rng();
+    for _ in 0..100 {
+        let a = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+        let b = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+        let c = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+
+        // additive associativity
+        let lhs = (a.clone() + b.clone()) + c.clone();
+        let rhs = a.clone() + (b.clone() + c.clone());
+        assert_eq!(lhs, rhs);
+        // additive commutativity
+        let lhs = a.clone() + b.clone();
+        let rhs = b.clone() + a.clone();
+        assert_eq!(lhs, rhs);
+        // additive identity
+        let zero = Polynomial::zero();
+        let lhs = a.clone() + zero.clone();
+        let rhs = a.clone();
+        assert_eq!(lhs, rhs);
+        // additive inverse
+        let lhs = a.clone() + (-a.clone());
+        let rhs = zero.clone();
+        assert_eq!(lhs, rhs);
+    }
+}
+
 #[test]
 fn test_monoid_under_multiplication() {
     let rng = &mut rng();
@@ -54,6 +93,37 @@ fn test_monoid_under_multiplication() {
     }
 }
 
+#[cfg(all(feature = "zq"))]
+#[test]
+fn test_monoid_under_multiplication_over_zq() {
+    use poly_ring_xnp1::zq::ZqI32;
+    let rng = &mut rng();
+    for _ in 0..100 {
+        let a = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+        let b = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+        let c = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+
+        // multiplicative associativity
+        let lhs = (a.clone() * b.clone()) * c.clone();
+        let rhs = a.clone() * (b.clone() * c.clone());
+        assert_eq!(lhs, rhs);
+        // multiplicative identity
+        let one = Polynomial::one();
+        let lhs = a.clone() * one.clone();
+        let rhs = a.clone();
+        assert_eq!(lhs, rhs);
+    }
+}
+
 #[test]
 fn test_multiplication_distributive_wrt_addition() {
     let rng = &mut rng();
@@ -61,6 +131,36 @@ fn test_multiplication_distributive_wrt_addition() {
         let a = test_random_polynomial::<i32>(rng, -100..=100);
         let b = test_random_polynomial::<i32>(rng, -100..=100);
         let c = test_random_polynomial::<i32>(rng, -100..=100);
+
+        // left distributivity
+        let lhs = a.clone() * (b.clone() + c.clone());
+        let rhs = a.clone() * b.clone() + a.clone() * c.clone();
+        assert_eq!(lhs, rhs);
+        // right distributivity
+        let lhs = (a.clone() + b.clone()) * c.clone();
+        let rhs = a.clone() * c.clone() + b.clone() * c.clone();
+        assert_eq!(lhs, rhs);
+    }
+}
+
+#[cfg(all(feature = "zq"))]
+#[test]
+fn test_multiplication_distributive_wrt_addition_over_zq() {
+    use poly_ring_xnp1::zq::ZqI32;
+    let rng = &mut rng();
+    for _ in 0..100 {
+        let a = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+        let b = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+        let c = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
 
         // left distributivity
         let lhs = a.clone() * (b.clone() + c.clone());
