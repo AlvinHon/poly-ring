@@ -1,5 +1,5 @@
 use criterion::{criterion_main, Criterion};
-use rand::{rng, Rng};
+use rand::{rng, RngExt};
 
 criterion_main!(benches);
 

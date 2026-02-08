@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use num::{One, Zero};
 use poly_ring_xnp1::Polynomial;
-use rand::{distr::uniform::SampleUniform, rng, Rng};
+use rand::{distr::uniform::SampleUniform, rng, RngExt};
 
 const N: usize = 512; // power of two
 
@@ -216,7 +216,7 @@ fn test_serde_over_zq() {
     assert_eq!(serialized_p.len(), 40);
 }
 
-fn test_random_polynomial<T>(rng: &mut impl Rng, range: RangeInclusive<T>) -> Polynomial<T, N>
+fn test_random_polynomial<T>(rng: &mut impl RngExt, range: RangeInclusive<T>) -> Polynomial<T, N>
 where
     T: Zero + Clone + PartialOrd + Ord + SampleUniform,
 {

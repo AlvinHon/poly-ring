@@ -79,7 +79,7 @@ where
     T: Zero,
     StandardUniform: Distribution<T>,
 {
-    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Polynomial<T, N> {
+    fn sample<R: rand::RngExt + ?Sized>(&self, rng: &mut R) -> Polynomial<T, N> {
         let coeffs = (0..N).map(|_| rng.random()).collect();
         Polynomial::new(coeffs)
     }
@@ -91,7 +91,7 @@ where
 /// # Example
 ///
 /// ```
-/// use rand::Rng;
+/// use rand::RngExt;
 /// use poly_ring_xnp1::{Polynomial, rand::CoeffsRange};
 ///
 /// let rng = &mut rand::rng();
@@ -117,7 +117,7 @@ impl<T> From<Range<T>> for CoeffsRange<T> {
 /// # Example
 ///
 /// ```
-/// use rand::Rng;
+/// use rand::RngExt;
 /// use poly_ring_xnp1::{Polynomial, rand::CoeffsRangeInclusive};
 ///
 /// let rng = &mut rand::rng();
@@ -143,7 +143,7 @@ macro_rules! impl_samplerange {
         where
             T: Clone + PartialOrd + Zero + SampleUniform,
         {
-            fn sample_single<R: rand::RngCore + ?Sized>(
+            fn sample_single<R: rand::RngExt + ?Sized>(
                 self,
                 rng: &mut R,
             ) -> Result<Polynomial<T, N>, rand::distr::uniform::Error> {
@@ -170,7 +170,7 @@ impl_samplerange!(Polynomial<T, N>, CoeffsRangeInclusive<T>);
 
 #[cfg(test)]
 mod tests {
-    use rand::Rng;
+    use rand::RngExt;
 
     use super::*;
 

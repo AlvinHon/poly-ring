@@ -135,7 +135,7 @@ pub(crate) fn trim_zeros<T: Zero>(v: &mut Vec<T>) {
 mod tests {
     use std::ops::Neg;
 
-    use rand::Rng;
+    use rand::RngExt;
 
     use super::*;
 

@@ -54,7 +54,7 @@ sampler_structs_uniform_impls!(ZqU128Sampler, u128, ZqU128);
 
 #[cfg(test)]
 mod tests {
-    use rand::Rng;
+    use rand::RngExt;
 
     use super::*;
 
