@@ -1,3 +1,7 @@
+### 0.3.3 (9-Feb-2026)
+- Add num traits ConstZero, ConstOne, Num,, Rem and Signed for Zq structs
+- Bump dependency rand to 0.10
+
 ### 0.3.2 (5-Apr-2025)
 - Add structs ZqI128 and ZqU128
 
