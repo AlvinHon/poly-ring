@@ -226,6 +226,31 @@ fn test_division_algorithm_over_zq() {
     }
 }
 
+#[cfg(all(feature = "zq", feature = "rand"))]
+#[test]
+fn test_inverse_over_zq() {
+    use poly_ring_xnp1::zq::ZqI32;
+    let rng = &mut rng();
+    for _ in 0..100 {
+        let a = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+
+        // To avoid zero polynomial which doesn't have inverse
+        if a.is_zero() {
+            continue;
+        }
+
+        if let Some(inv_a) = a.clone().inverse() {
+            // a * a^-1 = 1
+            let lhs = a.clone() * inv_a.clone();
+            let rhs = Polynomial::one();
+            assert_eq!(lhs, rhs);
+        }
+    }
+}
+
 #[cfg(all(feature = "zq", feature = "serde"))]
 #[test]
 fn test_serde_over_zq() {

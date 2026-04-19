@@ -300,8 +300,8 @@ where
     type Output = Self;
 
     fn div(self, other: Self) -> Self {
-        let (quotient, _) = arith::div_rem(self, other);
-        quotient
+        let (quotient, _) = arith::div_rem(self.coeffs, other.coeffs);
+        Polynomial::new(quotient)
     }
 }
 
@@ -316,8 +316,8 @@ where
     type Output = Self;
 
     fn rem(self, other: Self) -> Self {
-        let (_, remainder) = arith::div_rem(self, other);
-        remainder
+        let (_, remainder) = arith::div_rem(self.coeffs, other.coeffs);
+        Polynomial::new(remainder)
     }
 }
 
@@ -346,6 +346,40 @@ where
     {
         let coeffs = Vec::<T>::deserialize(deserializer)?;
         Ok(Polynomial::new(coeffs))
+    }
+}
+
+#[cfg(feature = "zq")]
+impl<T: std::cmp::PartialEq, const N: usize> Polynomial<T, N> {
+    /// Returns the multiplicative inverse of the polynomial if it exists, otherwise returns None.
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// use poly_ring_xnp1::{Polynomial, zq::ZqI32};
+    /// use num::{One, Zero};
+    ///
+    /// // p(x) = 1 where the coefficient is in Z/7Z.
+    /// let p = Polynomial::<ZqI32<7>, 4>::new(vec![1]);
+    /// let p_inv = p.inverse().unwrap();
+    /// // p * p_inv ≡ 1 (mod x^4 + 1)
+    /// assert_eq!(p * p_inv, Polynomial::one());
+    ///
+    /// // p(x) = 0
+    /// let p = Polynomial::<ZqI32<7>, 4>::zero();
+    /// assert!(p.inverse().is_none());
+    /// ```
+    pub fn inverse(&self) -> Option<Self>
+    where
+        T: crate::zq::Zq
+            + Zero
+            + One
+            + Clone
+            + std::ops::Div<Output = T>
+            + std::ops::Neg<Output = T>,
+        for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+    {
+        arith::inverse::<T, N>(self.coeffs.clone()).map(Polynomial::from_coeffs)
     }
 }
 
