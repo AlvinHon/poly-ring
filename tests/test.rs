@@ -34,7 +34,7 @@ fn test_abelian_group_under_addition() {
     }
 }
 
-#[cfg(all(feature = "zq"))]
+#[cfg(all(feature = "zq", feature = "rand"))]
 #[test]
 fn test_abelian_group_under_addition_over_zq() {
     use poly_ring_xnp1::zq::ZqI32;
@@ -93,7 +93,7 @@ fn test_monoid_under_multiplication() {
     }
 }
 
-#[cfg(all(feature = "zq"))]
+#[cfg(all(feature = "zq", feature = "rand"))]
 #[test]
 fn test_monoid_under_multiplication_over_zq() {
     use poly_ring_xnp1::zq::ZqI32;
@@ -143,7 +143,7 @@ fn test_multiplication_distributive_wrt_addition() {
     }
 }
 
-#[cfg(all(feature = "zq"))]
+#[cfg(all(feature = "zq", feature = "rand"))]
 #[test]
 fn test_multiplication_distributive_wrt_addition_over_zq() {
     use poly_ring_xnp1::zq::ZqI32;
