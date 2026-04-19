@@ -143,6 +143,27 @@ fn test_multiplication_distributive_wrt_addition() {
     }
 }
 
+#[test]
+fn test_division_algorithm() {
+    let rng = &mut rng();
+    for _ in 0..100 {
+        let a = test_random_polynomial::<i32>(rng, -100..=100);
+        let b = test_random_polynomial::<i32>(rng, -100..=100);
+
+        // To avoid division by zero polynomial
+        if b.is_zero() {
+            continue;
+        }
+
+        let r = a.clone() / b.clone();
+        let q = a.clone() % b.clone();
+        // a = b * (a / b) + (a % b)
+        let lhs = b.clone() * r.clone() + q.clone();
+        let rhs = a.clone();
+        assert_eq!(lhs, rhs);
+    }
+}
+
 #[cfg(all(feature = "zq", feature = "rand"))]
 #[test]
 fn test_multiplication_distributive_wrt_addition_over_zq() {
@@ -195,6 +216,35 @@ fn test_serde() {
 
     let deserialized_p = bincode::deserialize(&serialized_p).unwrap();
     assert_eq!(p, deserialized_p);
+}
+
+#[cfg(all(feature = "zq", feature = "rand"))]
+#[test]
+fn test_division_algorithm_over_zq() {
+    use poly_ring_xnp1::zq::ZqI32;
+    let rng = &mut rng();
+    for _ in 0..100 {
+        let a = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+        let b = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+
+        // To avoid division by zero polynomial
+        if b.is_zero() {
+            continue;
+        }
+
+        let r = a.clone() / b.clone();
+        let q = a.clone() % b.clone();
+        // a = b * (a / b) + (a % b)
+        let lhs = b.clone() * r.clone() + q.clone();
+        let rhs = a.clone();
+        assert_eq!(lhs, rhs);
+    }
 }
 
 #[cfg(all(feature = "zq", feature = "serde"))]

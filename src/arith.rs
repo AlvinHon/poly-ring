@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub};
 
 use num::{One, Zero};
 
@@ -118,6 +118,59 @@ where
     }
 
     r
+}
+
+/// Divide polynomials `a / b` and return (quotient, remainder).
+/// Performs polynomial long division where `a = q * b + r` and `deg(r) < deg(b)`.
+pub(crate) fn div_rem<T, const N: usize>(
+    a: Polynomial<T, N>,
+    b: Polynomial<T, N>,
+) -> (Polynomial<T, N>, Polynomial<T, N>)
+where
+    T: Zero + One + Clone + Div<Output = T>,
+    for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+{
+    if b.is_zero() {
+        panic!("Division by zero polynomial");
+    }
+
+    if a.is_zero() {
+        return (Polynomial::zero(), Polynomial::zero());
+    }
+
+    if a.deg() < b.deg() {
+        return (Polynomial::zero(), a);
+    }
+
+    let mut quotient_coeffs = vec![T::zero(); a.deg() - b.deg() + 1];
+    let mut remainder = a.coeffs.clone();
+
+    let b_lead = b.leading_coefficient();
+
+    for i in (0..quotient_coeffs.len()).rev() {
+        if remainder.len() <= i + b.deg() {
+            continue;
+        }
+        let rem_lead = remainder[i + b.deg()].clone();
+        let coeff = rem_lead / b_lead.clone();
+        quotient_coeffs[i] = coeff.clone();
+
+        for j in 0..b.coeffs.len() {
+            if i + j < remainder.len() {
+                remainder[i + j] = &remainder[i + j] - &(&coeff * &b.coeffs[j]);
+            }
+        }
+    }
+
+    trim_zeros(&mut remainder);
+    trim_zeros(&mut quotient_coeffs);
+
+    let quotient = Polynomial {
+        coeffs: quotient_coeffs,
+    };
+    let remainder = Polynomial { coeffs: remainder };
+
+    (quotient, remainder)
 }
 
 /// Trims the leading zero coefficients of the polynomial.
