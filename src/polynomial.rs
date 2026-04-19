@@ -78,6 +78,22 @@ impl<T, const N: usize> Polynomial<T, N> {
         arith::modulo(Polynomial { coeffs }, PolynomialModulus::<T>::new(N))
     }
 
+    /// Returns the coefficients of the polynomial as a vector, where the polynomial
+    /// is represented by p(x) = coeffs\[0\] + coeffs\[1\] * x + coeffs\[2\] * x^2 + ...
+    ///
+    /// ## Example
+    /// ```
+    /// use poly_ring_xnp1::Polynomial;
+    ///
+    /// // p(x) = 1 + 2x + 3x^2
+    /// let p = Polynomial::<i32, 4>::new(vec![1, 2, 3]);
+    /// let coeffs = p.to_coeffs();
+    /// assert_eq!(coeffs, vec![1, 2, 3]);
+    /// ```
+    pub fn to_coeffs(self) -> Vec<T> {
+        self.coeffs
+    }
+
     /// Returns the degree of the polynomial.
     ///
     /// ## Example
