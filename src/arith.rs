@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, Mul, Sub};
 
 use num::{One, Zero};
 
@@ -122,12 +122,13 @@ where
 
 /// Divide polynomials `a / b` and return (quotient, remainder).
 /// Performs polynomial long division where `a = q * b + r` and `deg(r) < deg(b)`.
+#[cfg(feature = "zq")]
 pub(crate) fn div_rem<T, const N: usize>(
     a: Polynomial<T, N>,
     b: Polynomial<T, N>,
 ) -> (Polynomial<T, N>, Polynomial<T, N>)
 where
-    T: Zero + One + Clone + Div<Output = T>,
+    T: Zero + One + Clone + std::ops::Div<Output = T>,
     for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
 {
     if b.is_zero() {

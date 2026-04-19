@@ -143,27 +143,6 @@ fn test_multiplication_distributive_wrt_addition() {
     }
 }
 
-#[test]
-fn test_division_algorithm() {
-    let rng = &mut rng();
-    for _ in 0..100 {
-        let a = test_random_polynomial::<i32>(rng, -100..=100);
-        let b = test_random_polynomial::<i32>(rng, -100..=100);
-
-        // To avoid division by zero polynomial
-        if b.is_zero() {
-            continue;
-        }
-
-        let r = a.clone() / b.clone();
-        let q = a.clone() % b.clone();
-        // a = b * (a / b) + (a % b)
-        let lhs = b.clone() * r.clone() + q.clone();
-        let rhs = a.clone();
-        assert_eq!(lhs, rhs);
-    }
-}
-
 #[cfg(all(feature = "zq", feature = "rand"))]
 #[test]
 fn test_multiplication_distributive_wrt_addition_over_zq() {
@@ -274,7 +253,11 @@ where
     {
         use poly_ring_xnp1::rand::CoeffsRangeInclusive;
         let range = CoeffsRangeInclusive::from(range);
-        return rng.random_range(range);
+        let p: Polynomial<T, N> = rng.random_range(range);
+
+        let coeff_size = rng.random_range(1..N);
+        let vecs = p.to_coeffs().iter().take(coeff_size).cloned().collect();
+        return Polynomial::new(vecs);
     }
 
     #[cfg(not(feature = "rand"))]

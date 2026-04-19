@@ -3,7 +3,7 @@ use crate::{
     modulo::PolynomialModulus,
 };
 use num::{One, Zero};
-use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
+use std::ops::{Add, Mul, Neg, Sub};
 
 /// Polynomial implemented by a vector of coefficients of type `T` with
 /// operations defined in Zp\[X\]/(x^n + 1). **The constant N must be a power of two.**
@@ -289,9 +289,12 @@ where
     }
 }
 
-impl<T, const N: usize> Div for Polynomial<T, N>
+#[cfg(feature = "zq")]
+impl<T, const N: usize> std::ops::Div for Polynomial<T, N>
 where
-    T: Zero + One + Clone + Div<Output = T>,
+    // In this version, the Div trait is only implemented for polynomials over Zq for
+    // avoiding overflow and ensuring the leading coefficient of the divisor is invertible.
+    T: crate::zq::Zq + Zero + One + Clone + std::ops::Div<Output = T>,
     for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
 {
     type Output = Self;
@@ -302,9 +305,12 @@ where
     }
 }
 
-impl<T, const N: usize> Rem for Polynomial<T, N>
+#[cfg(feature = "zq")]
+impl<T, const N: usize> std::ops::Rem for Polynomial<T, N>
 where
-    T: Zero + One + Clone + Div<Output = T>,
+    // In this version, the Rem trait is only implemented for polynomials over Zq for
+    // avoiding overflow and ensuring the leading coefficient of the divisor is invertible.
+    T: crate::zq::Zq + Zero + One + Clone + std::ops::Div<Output = T>,
     for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
 {
     type Output = Self;
@@ -385,30 +391,6 @@ mod tests {
         let p2 = Polynomial::new(vec![4, 5]);
         let r = p1.clone() - p2.clone();
         assert_eq!(r.coeffs, vec![-3, -3, 3]);
-    }
-
-    #[test]
-    fn test_divide() {
-        // p(x) = x^2 + 2x + 1 = (x + 1)^2
-        let p = Polynomial::<f64, 4>::new(vec![1.0, 2.0, 1.0]);
-        // d(x) = x + 1
-        let d = Polynomial::new(vec![1.0, 1.0]);
-        let q = p / d;
-        // q(x) = x + 1, r(x) = 0
-        assert_eq!(q.deg(), 1);
-        assert_eq!(q.coefficient(0), 1.0);
-        assert_eq!(q.coefficient(1), 1.0);
-    }
-
-    #[test]
-    fn test_rem() {
-        // p(x) = x^2 + 2x + 1 = (x + 1)^2
-        let p = Polynomial::<f64, 4>::new(vec![1.0, 2.0, 1.0]);
-        // d(x) = x + 1
-        let d = Polynomial::new(vec![1.0, 1.0]);
-        let r = p % d;
-        // q(x) = x + 1, r(x) = 0
-        assert!(r.is_zero());
     }
 
     #[cfg(feature = "zq")]

@@ -12,6 +12,17 @@ pub mod rand;
 pub mod serde;
 pub mod sign;
 
+/// A trait representing the ring Z/QZ.
+/// It is implemented for `ZqI32`, `ZqI64`, `ZqI128`, `ZqU32`, `ZqU64` and `ZqU128`.
+pub trait Zq {}
+
+impl<const Q: i32> Zq for ZqI32<Q> {}
+impl<const Q: i64> Zq for ZqI64<Q> {}
+impl<const Q: i128> Zq for ZqI128<Q> {}
+impl<const Q: u32> Zq for ZqU32<Q> {}
+impl<const Q: u64> Zq for ZqU64<Q> {}
+impl<const Q: u128> Zq for ZqU128<Q> {}
+
 /// A type representing an element of the ring Z/QZ. The value is normalized to the range \[-Q/2, Q/2\].
 ///
 /// ## Safety
