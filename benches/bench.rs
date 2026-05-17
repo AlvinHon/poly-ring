@@ -15,6 +15,7 @@ pub fn benches() {
     {
         bench_polynomial_ring_addition_over_zq(c);
         bench_polynomial_ring_multiplication_over_zq(c);
+        bench_polynomial_ring_inverse_over_zq(c);
     }
 }
 
@@ -205,5 +206,72 @@ fn bench_polynomial_ring_multiplication_over_zq(c: &mut Criterion) {
         b.iter(|| {
             let _ = poly_ring.mul(&p_coeffs, &q_coeffs);
         })
+    });
+}
+
+#[cfg(feature = "zq")]
+fn bench_polynomial_ring_inverse_over_zq(c: &mut Criterion) {
+    use abstalg::{I32, Monoid, PolynomialAlgebra, QuotientField, QuotientRing};
+    use num::One;
+
+    let rng = &mut rng();
+
+    const Q: i32 = 7;
+
+    let mut group = c.benchmark_group("Polynomial Ring Division Over Zq");
+
+    // crate: abstalg
+    let poly_ring = {
+        let field = QuotientField::new(I32, Q as i32);
+        let ring = PolynomialAlgebra::new(field);
+        let moduli = (0..=N)
+            .map(|i| if i == 0 || i == N { 1 } else { 0 })
+            .collect::<Vec<_>>();
+        QuotientRing::new(ring, moduli)
+    };
+    // Find a random polynomial that is invertible in the ring
+    let p_coeffs = {
+        loop {
+            let p_coeffs = (0..N)
+                .map(|_| rng.random_range(0..7u32))
+                .map(|x| x as i32)
+                .collect::<Vec<_>>();
+            // check if p_coeffs is zero
+            if p_coeffs.iter().all(|&x| x == 0) {
+                continue;
+            }
+            if poly_ring.try_inv(&p_coeffs).is_some() {
+                break p_coeffs;
+            }
+        }
+    };
+
+    group.bench_function("abstalg", |b| {
+        b.iter(|| {
+            let _ = poly_ring.try_inv(&p_coeffs);
+        })
+    });
+
+    // crate: polynomial_ring
+    let p = polynomial_ring::Polynomial::new(p_coeffs.clone());
+    let mut one = polynomial_ring::Polynomial::one();
+
+    group.bench_function("polynomial_ring", |b| {
+        b.iter(|| {
+            let _ = one.division(&p);
+        })
+    });
+
+    // this crate
+    let p = poly_ring_xnp1::Polynomial::<poly_ring_xnp1::zq::ZqI32<Q>, N>::new(p_coeffs.clone());
+
+    group.bench_function("poly_ring_xnp1", |b| {
+        b.iter_batched(
+            || p.clone(),
+            |p| {
+                let _ = p.inverse();
+            },
+            criterion::BatchSize::SmallInput,
+        );
     });
 }
