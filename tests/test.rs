@@ -34,7 +34,7 @@ fn test_abelian_group_under_addition() {
     }
 }
 
-#[cfg(all(feature = "zq"))]
+#[cfg(all(feature = "zq", feature = "rand"))]
 #[test]
 fn test_abelian_group_under_addition_over_zq() {
     use poly_ring_xnp1::zq::ZqI32;
@@ -93,7 +93,7 @@ fn test_monoid_under_multiplication() {
     }
 }
 
-#[cfg(all(feature = "zq"))]
+#[cfg(all(feature = "zq", feature = "rand"))]
 #[test]
 fn test_monoid_under_multiplication_over_zq() {
     use poly_ring_xnp1::zq::ZqI32;
@@ -143,7 +143,7 @@ fn test_multiplication_distributive_wrt_addition() {
     }
 }
 
-#[cfg(all(feature = "zq"))]
+#[cfg(all(feature = "zq", feature = "rand"))]
 #[test]
 fn test_multiplication_distributive_wrt_addition_over_zq() {
     use poly_ring_xnp1::zq::ZqI32;
@@ -197,6 +197,60 @@ fn test_serde() {
     assert_eq!(p, deserialized_p);
 }
 
+#[cfg(all(feature = "zq", feature = "rand"))]
+#[test]
+fn test_division_algorithm_over_zq() {
+    use poly_ring_xnp1::zq::ZqI32;
+    let rng = &mut rng();
+    for _ in 0..100 {
+        let a = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+        let b = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+
+        // To avoid division by zero polynomial
+        if b.is_zero() {
+            continue;
+        }
+
+        let r = a.clone() / b.clone();
+        let q = a.clone() % b.clone();
+        // a = b * (a / b) + (a % b)
+        let lhs = b.clone() * r.clone() + q.clone();
+        let rhs = a.clone();
+        assert_eq!(lhs, rhs);
+    }
+}
+
+#[cfg(all(feature = "zq", feature = "rand"))]
+#[test]
+fn test_inverse_over_zq() {
+    use poly_ring_xnp1::zq::ZqI32;
+    let rng = &mut rng();
+    for _ in 0..100 {
+        let a = test_random_polynomial::<ZqI32<3329>>(
+            rng,
+            ZqI32::<3329>::new(-1664)..=ZqI32::<3329>::new(1664),
+        );
+
+        // To avoid zero polynomial which doesn't have inverse
+        if a.is_zero() {
+            continue;
+        }
+
+        if let Some(inv_a) = a.clone().inverse() {
+            // a * a^-1 = 1
+            let lhs = a.clone() * inv_a.clone();
+            let rhs = Polynomial::one();
+            assert_eq!(lhs, rhs);
+        }
+    }
+}
+
 #[cfg(all(feature = "zq", feature = "serde"))]
 #[test]
 fn test_serde_over_zq() {
@@ -224,7 +278,11 @@ where
     {
         use poly_ring_xnp1::rand::CoeffsRangeInclusive;
         let range = CoeffsRangeInclusive::from(range);
-        return rng.random_range(range);
+        let p: Polynomial<T, N> = rng.random_range(range);
+
+        let coeff_size = rng.random_range(1..N);
+        let vecs = p.to_coeffs().iter().take(coeff_size).cloned().collect();
+        return Polynomial::new(vecs);
     }
 
     #[cfg(not(feature = "rand"))]

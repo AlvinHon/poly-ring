@@ -78,6 +78,22 @@ impl<T, const N: usize> Polynomial<T, N> {
         arith::modulo(Polynomial { coeffs }, PolynomialModulus::<T>::new(N))
     }
 
+    /// Returns the coefficients of the polynomial as a vector, where the polynomial
+    /// is represented by p(x) = coeffs\[0\] + coeffs\[1\] * x + coeffs\[2\] * x^2 + ...
+    ///
+    /// ## Example
+    /// ```
+    /// use poly_ring_xnp1::Polynomial;
+    ///
+    /// // p(x) = 1 + 2x + 3x^2
+    /// let p = Polynomial::<i32, 4>::new(vec![1, 2, 3]);
+    /// let coeffs = p.to_coeffs();
+    /// assert_eq!(coeffs, vec![1, 2, 3]);
+    /// ```
+    pub fn to_coeffs(self) -> Vec<T> {
+        self.coeffs
+    }
+
     /// Returns the degree of the polynomial.
     ///
     /// ## Example
@@ -273,6 +289,38 @@ where
     }
 }
 
+#[cfg(feature = "zq")]
+impl<T, const N: usize> std::ops::Div for Polynomial<T, N>
+where
+    // In this version, the Div trait is only implemented for polynomials over Zq for
+    // avoiding overflow and ensuring the leading coefficient of the divisor is invertible.
+    T: crate::zq::Zq + Zero + One + Clone + std::ops::Div<Output = T>,
+    for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+{
+    type Output = Self;
+
+    fn div(self, other: Self) -> Self {
+        let (quotient, _) = arith::div_rem(self.coeffs, other.coeffs);
+        Polynomial::new(quotient)
+    }
+}
+
+#[cfg(feature = "zq")]
+impl<T, const N: usize> std::ops::Rem for Polynomial<T, N>
+where
+    // In this version, the Rem trait is only implemented for polynomials over Zq for
+    // avoiding overflow and ensuring the leading coefficient of the divisor is invertible.
+    T: crate::zq::Zq + Zero + One + Clone + std::ops::Div<Output = T>,
+    for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+{
+    type Output = Self;
+
+    fn rem(self, other: Self) -> Self {
+        let (_, remainder) = arith::div_rem(self.coeffs, other.coeffs);
+        Polynomial::new(remainder)
+    }
+}
+
 // ... impl serde::(De)Serialize for Polynomial<T> ...
 #[cfg(feature = "serde")]
 impl<T, const N: usize> serde::Serialize for Polynomial<T, N>
@@ -298,6 +346,40 @@ where
     {
         let coeffs = Vec::<T>::deserialize(deserializer)?;
         Ok(Polynomial::new(coeffs))
+    }
+}
+
+#[cfg(feature = "zq")]
+impl<T: std::cmp::PartialEq, const N: usize> Polynomial<T, N> {
+    /// Returns the multiplicative inverse of the polynomial if it exists, otherwise returns None.
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// use poly_ring_xnp1::{Polynomial, zq::ZqI32};
+    /// use num::{One, Zero};
+    ///
+    /// // p(x) = 1 where the coefficient is in Z/7Z.
+    /// let p = Polynomial::<ZqI32<7>, 4>::new(vec![1]);
+    /// let p_inv = p.inverse().unwrap();
+    /// // p * p_inv ≡ 1 (mod x^4 + 1)
+    /// assert_eq!(p * p_inv, Polynomial::one());
+    ///
+    /// // p(x) = 0
+    /// let p = Polynomial::<ZqI32<7>, 4>::zero();
+    /// assert!(p.inverse().is_none());
+    /// ```
+    pub fn inverse(&self) -> Option<Self>
+    where
+        T: crate::zq::Zq
+            + Zero
+            + One
+            + Clone
+            + std::ops::Div<Output = T>
+            + std::ops::Neg<Output = T>,
+        for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+    {
+        arith::inverse::<T, N>(self.coeffs.clone()).map(Polynomial::from_coeffs)
     }
 }
 

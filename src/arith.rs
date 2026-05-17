@@ -120,6 +120,101 @@ where
     r
 }
 
+/// Divide polynomials `a / b` and return (quotient, remainder).
+/// Performs polynomial long division where `a = q * b + r` and `deg(r) < deg(b)`.
+#[cfg(feature = "zq")]
+pub(crate) fn div_rem<T>(mut a_coeffs: Vec<T>, mut b_coeffs: Vec<T>) -> (Vec<T>, Vec<T>)
+where
+    T: Zero + One + Clone + std::ops::Div<Output = T>,
+    for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+{
+    trim_zeros(&mut a_coeffs);
+    trim_zeros(&mut b_coeffs);
+
+    if b_coeffs.is_empty() {
+        panic!("Division by zero polynomial");
+    }
+
+    if a_coeffs.is_empty() {
+        return (vec![], vec![]);
+    }
+
+    if a_coeffs.len() < b_coeffs.len() {
+        return (vec![], a_coeffs);
+    }
+
+    let mut quotient_coeffs = vec![T::zero(); a_coeffs.len() - b_coeffs.len() + 1];
+    let mut remainder = a_coeffs.clone();
+
+    let b_lead = b_coeffs.last().cloned().unwrap_or_else(T::zero);
+
+    for i in (0..quotient_coeffs.len()).rev() {
+        if remainder.len() < i + b_coeffs.len() {
+            continue;
+        }
+        let rem_lead = remainder[i + b_coeffs.len() - 1].clone();
+        let coeff = rem_lead / b_lead.clone();
+        quotient_coeffs[i] = coeff.clone();
+
+        for j in 0..b_coeffs.len() {
+            if i + j < remainder.len() {
+                remainder[i + j] = &remainder[i + j] - &(&coeff * &b_coeffs[j]);
+            }
+        }
+    }
+
+    trim_zeros(&mut remainder);
+    trim_zeros(&mut quotient_coeffs);
+
+    (quotient_coeffs, remainder)
+}
+
+/// Computes the multiplicative inverse of a polynomial `a` modulo `x^N + 1` if it exists.
+/// It uses the Extended Euclidean Algorithm for polynomials.
+#[cfg(feature = "zq")]
+pub(crate) fn inverse<T, const N: usize>(mut a_coeffs: Vec<T>) -> Option<Vec<T>>
+where
+    T: Zero
+        + One
+        + Clone
+        + std::ops::Div<Output = T>
+        + std::ops::Neg<Output = T>
+        + std::cmp::PartialEq,
+    for<'a> &'a T: Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+{
+    trim_zeros(&mut a_coeffs);
+
+    // To avoid zero polynomial which doesn't have inverse
+    if a_coeffs.is_empty() {
+        return None;
+    }
+
+    // Extended Euclidean algorithm for polynomials
+    let mut r0 = [vec![T::one()], vec![T::zero(); N - 1], vec![T::one()]].concat(); // coeffs of x^N + 1
+    let mut r1 = a_coeffs;
+    let mut s0 = vec![T::one()];
+    let mut s1 = vec![T::zero()];
+    while !r1.is_empty() {
+        let (q, r) = div_rem(r0.clone(), r1.clone());
+        r0 = r1;
+        r1 = r.clone();
+        // s = s0 - q * s1
+        let s = {
+            let s0_poly = Polynomial::<T, N>::from_coeffs(s0.clone());
+            let q_poly = Polynomial::<T, N>::from_coeffs(q.clone());
+            let s1_poly = Polynomial::<T, N>::from_coeffs(s1.clone());
+            s0_poly + q_poly * s1_poly
+        };
+        s0 = s1;
+        s1 = s.coeffs.clone();
+    }
+    if r0.len() == 1 && r0[0] == T::one() {
+        Some(s1)
+    } else {
+        None
+    }
+}
+
 /// Trims the leading zero coefficients of the polynomial.
 pub(crate) fn trim_zeros<T: Zero>(v: &mut Vec<T>) {
     while let Some(&t) = v.last().as_ref() {

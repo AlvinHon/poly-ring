@@ -1,3 +1,7 @@
+### 0.3.4 (17-May-2026)
+- Add std::ops::Div and std::ops::Rem on Polynomial struct (only div over zq)
+- Implement method `inverse` on Polynomial struct (only inverse over zq) 
+
 ### 0.3.3 (9-Feb-2026)
 - Add num traits ConstZero, ConstOne, Num,, Rem and Signed for Zq structs
 - Bump dependency rand to 0.10
